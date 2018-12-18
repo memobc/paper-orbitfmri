@@ -10,9 +10,11 @@ Cooper, R. & Ritchey, M. (pre-print). [edit]
 
 # Resources
 
-I have shared a few key scripts in the ```analysis``` folder along with some corresponding data files and reports.
+The experiment scripts and instructions for the task can be found in the ```task``` folder.
 
-The general flow of the included scripts is as follows:
+I have also shared a few key analysis scripts in the ```analysis``` folder along with some corresponding ```data``` files and ```reports```.
+
+The general flow of the included analysis scripts is as follows:
 
 [edit]
 
