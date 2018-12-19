@@ -1,0 +1,145 @@
+StudyTrial,ObjectID,ObjectName,ObjectFile,SceneID,SceneName,SoundID,SoundName,Valence,Block,Ques1,Ques2,ColorStudy,SceneStudy,ColorTest,SceneTest,TestTrial
+19,43,church bell,obj143_tr.png,6,greenhouse,11,Night,Neutral,1,2,1,12,92,23,109,1
+12,59,necklace,obj185_tr.png,1,beach,3,Crash,Negative,1,2,1,99,37,28,113,2
+11,54,spoons,obj172_tr.png,3,field,10,Camera,Neutral,1,2,1,116,57,61,88,3
+21,129,telephone,obj480_tr.png,5,office,2,Airraid,Negative,1,1,2,58,31,49,28,4
+14,44,lounge chair,obj145_tr.png,6,greenhouse,6,Siren,Negative,1,1,2,65,31,85,100,5
+15,28,dish,obj89_tr.png,5,office,1,Alarm,Negative,1,2,1,96,84,86,60,6
+16,8,hammer,obj19_tr.png,1,beach,7,Rain,Neutral,1,1,2,63,104,16,55,7
+8,103,button,obj363_tr.png,2,plaza,5,Scream,Negative,1,1,2,85,45,90,99,8
+3,115,bowling pin,obj410_tr.png,3,field,12,Fan,Neutral,1,1,2,71,81,75,102,9
+9,50,makeup,obj162_tr.png,4,living,7,Rain,Neutral,1,1,2,72,21,80,77,10
+4,30,knocker,obj97_tr.png,2,plaza,4,Clock,Negative,1,2,1,116,60,61,98,11
+5,123,coat,obj446_tr.png,4,living,1,Alarm,Negative,1,2,1,20,89,58,91,12
+20,125,suit case,obj452_tr.png,2,plaza,10,Camera,Neutral,1,2,1,15,8,6,89,13
+1,77,microphone,obj228_tr.png,4,living,9,Yawn,Neutral,1,2,1,110,65,70,54,14
+6,47,chess piece,obj149_tr.png,1,beach,11,Night,Neutral,1,2,1,117,67,50,109,15
+10,9,hinge,obj20_tr.png,4,living,2,Airraid,Negative,1,1,2,50,40,28,37,16
+24,106,gavel,obj368_tr.png,3,field,4,Clock,Negative,1,2,1,50,41,99,8,17
+2,74,life vest,obj221_tr.png,3,field,5,Scream,Negative,1,1,2,21,114,28,64,18
+23,35,slipper,obj117_tr.png,5,office,9,Yawn,Neutral,1,2,1,34,58,45,67,19
+22,70,trash can,obj209_tr.png,6,greenhouse,12,Fan,Neutral,1,1,2,115,61,27,20,20
+17,62,trowel,obj191_tr.png,2,plaza,8,Mower,Neutral,1,1,2,49,24,83,120,21
+7,87,cake dish,obj299_tr.png,6,greenhouse,3,Crash,Negative,1,2,1,91,111,85,67,22
+13,111,socks,obj391_tr.png,1,beach,6,Siren,Negative,1,1,2,45,7,53,105,23
+18,68,neck cushion,obj199_tr.png,5,office,8,Mower,Neutral,1,1,2,81,3,12,59,24
+27,48,basket,obj153_tr.png,6,greenhouse,1,Alarm,Negative,2,1,2,30,54,64,46,25
+32,72,cart,obj216_tr.png,3,field,1,Alarm,Negative,2,1,2,26,15,116,70,26
+38,33,ruler,obj110_tr.png,3,field,11,Night,Neutral,2,1,2,4,89,105,72,27
+26,75,drawers,obj224_tr.png,5,office,12,Fan,Neutral,2,2,1,103,80,30,31,28
+45,91,paintbrush,obj310_tr.png,1,beach,2,Airraid,Negative,2,2,1,63,79,21,46,29
+48,124,bird house,obj448_tr.png,2,plaza,3,Crash,Negative,2,1,2,88,16,62,98,30
+33,22,ice pack,obj69_tr.png,4,living,4,Clock,Negative,2,1,2,87,109,113,114,31
+43,23,racket,obj78_tr.png,6,greenhouse,2,Airraid,Negative,2,2,1,52,72,26,76,32
+41,6,balloon,obj13_tr.png,3,field,6,Siren,Negative,2,2,1,102,108,81,109,33
+44,138,xylophone,obj515_tr.png,1,beach,4,Clock,Negative,2,1,2,25,50,107,37,34
+47,2,keys,obj5_tr.png,3,field,7,Rain,Neutral,2,2,1,49,34,114,111,35
+34,130,stapler,obj484_tr.png,2,plaza,6,Siren,Negative,2,2,1,71,44,66,47,36
+37,94,chopping board,obj336_tr.png,1,beach,8,Mower,Neutral,2,2,1,79,115,90,79,37
+42,127,hook,obj464_tr.png,2,plaza,12,Fan,Neutral,2,2,1,7,63,104,69,38
+46,1,jacket,obj4_tr.png,4,living,9,Yawn,Neutral,2,1,2,62,93,116,20,39
+40,69,mug,obj200_tr.png,6,greenhouse,11,Night,Neutral,2,1,2,101,111,92,39,40
+30,40,hat,obj126_tr.png,5,office,5,Scream,Negative,2,2,1,80,16,53,95,41
+39,134,bowling ball,obj499_tr.png,5,office,10,Camera,Neutral,2,1,2,54,56,21,95,42
+28,21,whistle,obj68_tr.png,1,beach,9,Yawn,Neutral,2,1,2,99,100,58,23,43
+31,114,boots,obj401_tr.png,2,plaza,10,Camera,Neutral,2,1,2,41,95,66,105,44
+35,64,clasp,obj195_tr.png,6,greenhouse,7,Rain,Neutral,2,2,1,3,7,81,84,45
+29,73,jar,obj217_tr.png,5,office,3,Crash,Negative,2,1,2,19,36,102,107,46
+25,121,first aid bag,obj428_tr.png,4,living,5,Scream,Negative,2,2,1,41,43,22,75,47
+36,133,comb,obj497_tr.png,4,living,8,Mower,Neutral,2,2,1,1,78,68,13,48
+59,7,scissors,obj17_tr.png,5,office,12,Fan,Neutral,3,1,2,56,98,19,66,49
+49,98,drill,obj353_tr.png,2,plaza,11,Night,Neutral,3,2,1,14,40,99,4,50
+68,90,urn,obj308_tr.png,2,plaza,1,Alarm,Negative,3,2,1,82,105,91,44,51
+53,13,cup,obj39_tr.png,6,greenhouse,9,Yawn,Neutral,3,2,1,73,11,55,53,52
+56,120,hip flask,obj427_tr.png,4,living,6,Siren,Negative,3,1,2,26,1,108,77,53
+72,55,jet ski,obj173_tr.png,3,field,9,Yawn,Neutral,3,2,1,62,58,11,19,54
+52,86,heeled boot,obj295_tr.png,4,living,10,Camera,Neutral,3,2,1,67,105,76,39,55
+67,39,hole punch,obj125_tr.png,5,office,3,Crash,Negative,3,2,1,16,29,84,14,56
+63,76,scrabble,obj225_tr.png,2,plaza,7,Rain,Neutral,3,1,2,57,82,84,83,57
+55,142,bauble,obj524_tr.png,4,living,3,Crash,Negative,3,2,1,5,20,11,14,58
+69,65,skirt,obj196_tr.png,6,greenhouse,5,Scream,Negative,3,1,2,91,75,14,115,59
+71,95,candle stick,obj340_tr.png,3,field,2,Airraid,Negative,3,1,2,14,22,46,19,60
+64,26,weight,obj86_tr.png,1,beach,8,Mower,Neutral,3,1,2,60,105,78,10,61
+61,31,lipstick,obj102_tr.png,1,beach,4,Clock,Negative,3,2,1,20,60,13,41,62
+62,34,sharpener,obj115_tr.png,6,greenhouse,8,Mower,Neutral,3,1,2,31,99,91,56,63
+57,104,exit light,obj366_tr.png,5,office,6,Siren,Negative,3,1,2,78,77,83,79,64
+58,97,beer,obj343_tr.png,2,plaza,2,Airraid,Negative,3,1,2,100,16,60,19,65
+54,89,computer mouse,obj304_tr.png,3,field,1,Alarm,Negative,3,2,1,89,4,74,103,66
+70,61,lighter,obj189_tr.png,1,beach,10,Camera,Neutral,3,2,1,4,79,32,118,67
+60,14,sink,obj43_tr.png,3,field,7,Rain,Neutral,3,1,2,46,106,101,4,68
+66,12,sieve,obj35_tr.png,6,greenhouse,4,Clock,Negative,3,2,1,14,28,7,116,69
+65,117,nail polish,obj417_tr.png,1,beach,5,Scream,Negative,3,1,2,39,34,93,55,70
+50,15,mittens,obj49_tr.png,4,living,12,Fan,Neutral,3,1,2,91,59,62,52,71
+51,93,shoe,obj335_tr.png,5,office,11,Night,Neutral,3,2,1,35,120,28,24,72
+73,27,television,obj88_tr.png,1,beach,12,Fan,Neutral,4,2,1,40,15,43,29,73
+88,58,hazard,obj183_tr.png,2,plaza,2,Airraid,Negative,4,2,1,100,49,2,99,74
+96,16,bookcase,obj50_tr.png,2,plaza,12,Fan,Neutral,4,2,1,72,108,66,66,75
+87,71,hammock,obj211_tr.png,3,field,9,Yawn,Neutral,4,1,2,37,27,120,56,76
+92,49,tent,obj160_tr.png,3,field,5,Scream,Negative,4,2,1,92,66,65,97,77
+91,17,toolbox,obj52_tr.png,3,field,8,Mower,Neutral,4,2,1,110,85,112,63,78
+81,126,soap dispenser,obj462_tr.png,2,plaza,11,Night,Neutral,4,1,2,48,5,100,89,79
+85,66,container,obj197_tr.png,4,living,1,Alarm,Negative,4,1,2,94,86,43,27,80
+90,131,computer,obj486_tr.png,1,beach,1,Alarm,Negative,4,1,2,66,120,34,21,81
+82,141,flask,obj520_tr.png,5,office,4,Clock,Negative,4,1,2,103,106,28,38,82
+80,19,flashlight,obj57_tr.png,1,beach,6,Siren,Negative,4,2,1,17,52,61,14,83
+86,99,door,obj355_tr.png,1,beach,10,Camera,Neutral,4,1,2,120,100,82,118,84
+79,18,dress,obj56_tr.png,5,office,11,Night,Neutral,4,1,2,43,82,101,73,85
+95,29,mixer,obj93_tr.png,6,greenhouse,7,Rain,Neutral,4,2,1,70,120,58,14,86
+78,122,purse,obj435_tr.png,6,greenhouse,5,Scream,Negative,4,2,1,1,15,63,67,87
+83,143,projector,obj529_tr.png,4,living,6,Siren,Negative,4,2,1,75,50,16,99,88
+76,25,bottle,obj83_tr.png,6,greenhouse,3,Crash,Negative,4,1,2,46,80,72,52,89
+93,112,barrel,obj392_tr.png,4,living,8,Mower,Neutral,4,2,1,42,103,117,44,90
+75,108,feather,obj386_tr.png,3,field,3,Crash,Negative,4,1,2,60,9,33,35,91
+84,67,folder,obj198_tr.png,5,office,7,Rain,Neutral,4,2,1,1,58,9,46,92
+74,52,balloon animal,obj165_tr.png,6,greenhouse,9,Yawn,Neutral,4,1,2,95,30,35,50,93
+77,24,oars,obj81_tr.png,2,plaza,4,Clock,Negative,4,1,2,18,33,97,36,94
+94,10,guitar,obj22_tr.png,5,office,2,Airraid,Negative,4,2,1,80,40,72,109,95
+89,105,picnic bench,obj367_tr.png,4,living,10,Camera,Neutral,4,1,2,11,20,120,54,96
+106,88,call bell,obj303_tr.png,4,living,2,Airraid,Negative,5,1,2,83,19,64,59,97
+103,128,dust pan,obj479_tr.png,6,greenhouse,12,Fan,Neutral,5,1,2,112,83,13,24,98
+102,81,ribbon,obj259_tr.png,3,field,12,Fan,Neutral,5,1,2,37,40,42,12,99
+118,63,crayon,obj192_tr.png,5,office,1,Alarm,Negative,5,2,1,53,6,10,30,100
+99,78,camera,obj232_tr.png,1,beach,9,Yawn,Neutral,5,2,1,58,88,49,54,101
+110,92,glue gun,obj334_tr.png,4,living,11,Night,Neutral,5,2,1,102,114,18,31,102
+113,83,hot water bottle,obj271_tr.png,5,office,8,Mower,Neutral,5,1,2,109,106,80,35,103
+111,20,wrench,obj60_tr.png,1,beach,7,Rain,Neutral,5,1,2,19,13,56,79,104
+115,37,drums,obj123_tr.png,3,field,4,Clock,Negative,5,2,1,18,105,104,88,105
+108,132,pitcher,obj487_tr.png,3,field,11,Night,Neutral,5,2,1,68,60,44,101,106
+109,38,clothes peg,obj124_tr.png,1,beach,5,Scream,Negative,5,1,2,39,41,69,54,107
+117,135,garden chair,obj504_tr.png,4,living,7,Rain,Neutral,5,1,2,50,82,73,33,108
+114,82,blender,obj260_tr.png,6,greenhouse,1,Alarm,Negative,5,2,1,43,15,93,13,109
+98,137,kayak,obj509_tr.png,6,greenhouse,6,Siren,Negative,5,1,2,59,36,76,28,110
+100,118,office chair,obj418_tr.png,5,office,10,Camera,Neutral,5,2,1,5,32,34,73,111
+120,113,hair comb,obj396_tr.png,2,plaza,9,Yawn,Neutral,5,2,1,98,66,115,79,112
+97,32,lamp,obj103_tr.png,4,living,4,Clock,Negative,5,2,1,15,58,116,77,113
+105,36,pot,obj120_tr.png,2,plaza,5,Scream,Negative,5,1,2,55,106,82,96,114
+112,45,t shirt,obj147_tr.png,6,greenhouse,10,Camera,Neutral,5,2,1,20,99,3,19,115
+104,3,arm chair,obj7_tr.png,5,office,6,Siren,Negative,5,1,2,33,55,6,64,116
+119,101,rain boot,obj361_tr.png,3,field,2,Airraid,Negative,5,1,2,53,21,71,1,117
+101,136,violin,obj508_tr.png,2,plaza,3,Crash,Negative,5,2,1,76,39,109,102,118
+116,53,cog,obj168_tr.png,1,beach,3,Crash,Negative,5,2,1,113,105,31,19,119
+107,5,backpack,obj11_tr.png,2,plaza,8,Mower,Neutral,5,1,2,30,18,15,35,120
+129,85,cutter,obj283_tr.png,2,plaza,6,Siren,Negative,6,2,1,36,9,85,73,121
+139,4,bag,obj10_tr.png,4,living,12,Fan,Neutral,6,2,1,53,68,63,43,122
+134,116,umbrella,obj414_tr.png,2,plaza,7,Rain,Neutral,6,2,1,93,45,106,93,123
+140,11,present,obj23_tr.png,2,plaza,1,Alarm,Negative,6,1,2,75,28,68,74,124
+122,140,box,obj519_tr.png,5,office,4,Clock,Negative,6,1,2,61,67,99,34,125
+121,144,foot stool,obj537_tr.png,2,plaza,9,Yawn,Neutral,6,1,2,117,100,31,86,126
+132,139,shorts,obj516_tr.png,6,greenhouse,4,Clock,Negative,6,1,2,62,72,2,85,127
+131,46,bread bin,obj148_tr.png,5,office,7,Rain,Neutral,6,2,1,28,50,73,109,128
+136,119,tape,obj421_tr.png,6,greenhouse,8,Mower,Neutral,6,2,1,82,26,37,5,129
+125,102,pouches,obj362_tr.png,6,greenhouse,2,Airraid,Negative,6,2,1,9,56,94,69,130
+126,110,candle,obj390_tr.png,1,beach,1,Alarm,Negative,6,1,2,73,90,25,88,131
+133,107,vase,obj378_tr.png,4,living,3,Crash,Negative,6,1,2,14,9,68,70,132
+137,41,cot,obj131_tr.png,3,field,10,Camera,Neutral,6,1,2,84,10,116,94,133
+144,80,badge,obj253_tr.png,3,field,3,Crash,Negative,6,1,2,116,110,107,54,134
+124,57,helmet,obj180_tr.png,1,beach,12,Fan,Neutral,6,2,1,21,7,26,112,135
+142,79,butterfly,obj234_tr.png,1,beach,11,Night,Neutral,6,1,2,93,44,76,37,136
+130,84,pin,obj277_tr.png,3,field,8,Mower,Neutral,6,2,1,44,94,96,69,137
+127,109,type writer,obj388_tr.png,4,living,5,Scream,Negative,6,2,1,91,105,99,27,138
+141,42,hair dryer,obj142_tr.png,4,living,11,Night,Neutral,6,1,2,72,51,29,109,139
+123,56,mannequin,obj178_tr.png,6,greenhouse,10,Camera,Neutral,6,1,2,46,10,48,20,140
+135,100,origami,obj360_tr.png,5,office,5,Scream,Negative,6,2,1,107,108,7,13,141
+143,96,insect,obj342_tr.png,5,office,9,Yawn,Neutral,6,1,2,11,29,63,107,142
+128,51,sofa,obj163_tr.png,3,field,6,Siren,Negative,6,2,1,17,56,4,53,143
+138,60,stool,obj186_tr.png,1,beach,2,Airraid,Negative,6,2,1,47,27,54,28,144
