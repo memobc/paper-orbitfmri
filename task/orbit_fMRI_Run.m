@@ -26,7 +26,7 @@ prompt = {'Date (MMDDYY):', ...
     'End run:',...
     'Scanner? (1 = fMRI, 0 = behav-only)',...
     'Debugging? (default=0):'};
-defaults = {'XXXX18','0XX','X','1','6','1','0'};
+defaults = {'XXXX18','0XX','1','6','1','0'};
 answer = inputdlg(prompt,'Experimental setup',1,defaults);
 
 [S.Date, S.subNum, S.startRun, S.endRun, S.scanner, S.debug] = deal(answer{:});
@@ -108,7 +108,7 @@ elseif S.scanner == 1 %if fMRI -- use button box
     S.responseKey = KbName('0)');
     
     %get scanner trigger device ID:
-    deviceString='Celeritas Dev'; %fibre optic scanner response box
+    deviceString='Celeritas Dev'; %Harvard scanner response box
     [id,name] = GetKeyboardIndices;
     
     S.trigDevice=0;
