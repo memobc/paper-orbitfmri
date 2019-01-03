@@ -1,0 +1,221 @@
+---
+title: "Orbit fMRI - ROI Background Connectivity Analyses"
+output:
+  html_notebook:
+    code_folding: hide
+    fontsize: 6pt
+    theme: spacelab
+    toc: yes
+    toc_float: yes
+  html_document:
+    df_print: paged
+    toc: yes
+---
+<style type="text/css">
+body{ /* Normal  */
+      font-size: 14px}
+td {  /* Table  */
+  font-size: 12px}
+h1.title {
+  font-size: 30px}
+h1 { /* Header 1 */
+  font-size: 24px}
+h2 { /* Header 2 */
+    font-size: 20px}
+code.r{ /* Code block */
+    font-size: 12px}
+</style>
+
+* Task background connectivity are run in CONN using a similar procedure to memory-modulated gppi analyses. However, instead of including task-related covariates as parametric modulators, here task-related covariates are regresssed out, along with FD, aCompCor, and motion, at the first-level de-noising step. 
+
+* Analyses use MNI-space unsmoothed data.  
+
+* Connectivity measures this reflect the 'background' or task-independent connections between bilateral ROIs, during either encoding or remember events. Thresholded at r > 0.25.
+
+```{r, include=FALSE}
+
+library('ggplot2')
+library('gridExtra')
+library('grid')
+library('cowplot')
+library('ggpubr')
+library('ggridges')
+library('tidyr')
+library('dplyr')
+library('ez')
+library('lsr')
+library('psych')
+library('reshape2')
+library('NetworkToolbox')
+library('knitr')
+library('pander')
+
+se <- function(x) sqrt(var(x)/length(x))  #function to calculate SE
+
+### define computer path
+#myComp <- '/Users/memolab/Google Drive/'
+myComp <- '/Users/rosecooper/Documents/'
+
+# where are my first level CONN matrices
+matrixPath <- paste(myComp,'Work/Boston/ORBIT/analysis/fMRI/Orbit/FunctionalConnectivity/conn-roiData/',sep="")
+
+### load in conn functions:
+source(paste(myComp,'MemoLab/Manuscripts/Orbit-fMRI/paper-OrbitfMRI-repo/analysis/background_functions_paper.R',sep=""))
+
+seeds        <- c("ANG","PREC","PCC","RSC","PHC","pHIPP","aHIPP","PRC","AMYG","FUS","ITC","OFC")
+networks     <- c(1,1,1,1,1,2,2,3,3,3,3,3)  #network assignments to match to above seeds
+networkNames <- c("PM","HIPP","AT")
+
+sOrder   <- c(3,11,7,12,8,9,1,10,2,4,5,6) #to re-order to above seeds whe R default to order alphabetically
+nOrder   <- c(3,2,1)
+
+```
+
+# ROI-to-ROI connections
+## Encoding
+```{r, fig.width=5,fig.height=5}
+
+##### Threshold for matrices:
+th <- 0.25
+
+model <- 'Task-Connectivity_weighted_ROI-to-ROI'
+### fmri subjects:
+subjects = list.dirs(path = paste(matrixPath,model,'/',sep = ""), full.names = FALSE, recursive = FALSE)
+
+
+##### ROI x ROI for Encoding #######
+event <- 'Encoding'
+title <- event
+
+# GET ROI-ROI connections  ------------------------------------------------------------------
+connMatrixE <- format_conn(matrixPath, seeds, subjects, model, event)
+
+### get p-values for each seed-target comparison --> connectivity significant?
+type = 'greater'
+connPValues <- get_conn_pValues(connMatrixE, seeds, sOrder, type, th)
+
+### plot mean conn matrix
+p <- plot_meanconn(connMatrixE, connPValues, seeds, sOrder, title, type, th)
+plot(p)
+ggsave(paste('Encoding_Background_ROI-ROI_',th,'.jpg',sep=""),plot=last_plot(),dpi=300,width=8,height=9.5)
+
+```
+
+## Remember
+```{r, fig.width=5,fig.height=5}
+
+##### ROI x ROI for Retrieval #######
+event <- 'Retrieval'
+title <- event
+
+# GET ROI-ROI connections  ------------------------------------------------------------------
+connMatrixR <- format_conn(matrixPath, seeds, subjects, model, event)
+
+### get p-values for each seed-target comparison --> connectivity significant?
+type = 'greater'
+connPValues <- get_conn_pValues(connMatrixR, seeds, sOrder, type, th)
+
+### plot mean conn matrix
+p <- plot_meanconn(connMatrixR, connPValues, seeds, sOrder, title, type, th)
+plot(p)
+ggsave(paste('Retrieval_Background_ROI-ROI_',th,'.jpg',sep=""),plot=last_plot(),dpi=300,width=8,height=9.5)
+
+```
+
+## Remember-Encoding
+```{r, fig.width=5,fig.height=5}
+
+##### ROI x ROI for Difference #######
+event <- 'Remember-Encoding'
+title <- event
+
+# GET ROI-ROI connections  ------------------------------------------------------------------
+connMatrix <- connMatrixR - connMatrixE
+
+### get p-values for each seed-target comparison --> connectivity significant?
+type = 'two.sided'
+connPValues <- get_conn_pValues(connMatrix, seeds, sOrder, type, th)
+
+### plot mean conn matrix
+p <- plot_meanconn(connMatrix, connPValues, seeds, sOrder, title, type, th)
+plot(p)
+ggsave(paste('Retrieval-Encoding_Background_ROI-ROI_',th,'.jpg',sep=""),plot=last_plot(),dpi=300,width=8,height=9.5)
+
+```
+
+# Modularity
+```{r, fig.width=3,fig.height=4}
+
+# Get modularity by subject onn thresholded, weighted matrix:
+# Encoding and Retrieval:
+mod <- run_modularity(connMatrixE, connMatrixR, subjects, th)
+mod$Task <- as.factor(mod$Task)
+mod$Subject <- as.factor(mod$Subject)
+
+# plot
+p <- ggplot(mod, aes(x = Task, y=Modularity, fill=Task)) +
+    stat_summary(fun.y = mean, geom="bar", alpha = 0.6, color = 'gray10', position = position_dodge(1)) +
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1, alpha = 0.8, position = position_dodge(1)) +
+    stat_summary(fun.data = mean_se, geom = "errorbar", fun.args = list(mult = 1.96),
+                 width = 0.45, color = "black", size = 0.65, position = position_dodge(1)) +
+    scale_fill_manual(values = c('gray50','gray80')) + geom_hline(yintercept = 0) + ylab("Mean Q") +
+    ggtitle("Modularity") +
+    theme(plot.title = element_text(hjust = 0.5, size=28), axis.line = element_line(colour = "black"), 
+          axis.text = element_text(size = 22), axis.title = element_text(size = 24), panel.background = element_blank(),
+          legend.position="none", text = element_text(family="Helvetica")) 
+plot(p)
+ggsave(paste('Modularity_',th,'.jpg',sep=""), plot = last_plot(), dpi = 300, width = 4.2, height = 5)
+
+# t-test on change in modularity:
+mod <- data.frame(mod)
+pander(t.test(Modularity ~ Task, data=mod, paired=TRUE))
+
+```
+
+# Between vs Within Network Connectivity
+```{r, fig.width=5,fig.height=4}
+
+# Get modularity by subject onn thresholded, weighted matrix:
+# Encoding and Retrieval:
+network <- run_network(connMatrixE, connMatrixR, subjects, networks, th)
+network$Measure <- as.factor(network$Measure)
+network$Task <- as.factor(network$Task)
+network$Subject <- as.factor(network$Subject)
+
+# plots retrieval vs encoding within vs between network connectivity:
+p <- ggplot(network, aes(x = Measure, y=Strength, fill=Task)) +
+    stat_summary(fun.y = mean, geom="bar", alpha = 0.6, color = 'gray10', position = position_dodge(1)) +
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1, alpha = 0.8, position = position_dodge(1)) +
+    stat_summary(fun.data = mean_se, geom = "errorbar", fun.args = list(mult = 1.96),
+                 width = 0.45, color = "black", size = 0.65, position = position_dodge(1)) +
+    scale_fill_manual(values = c('gray50','gray80')) + geom_hline(yintercept = 0) + ylab("Mean Stength") + 
+    ggtitle("Network Density") +
+    theme(plot.title = element_text(hjust = 0.5, size=28), axis.line = element_line(colour = "black"), 
+          axis.text = element_text(size = 22), axis.title = element_text(size = 24), panel.background = element_blank(),
+          text = element_text(family="Helvetica")) 
+plot(p) 
+ggsave(paste('NetworkStrength_',th,'.jpg',sep=""), plot = last_plot(), dpi = 300, width = 6, height = 5)
+
+#RUN ANOVA
+pander(ezANOVA(data = network, dv = Strength, wid = Subject, 
+        detailed = TRUE, within = .(Measure,Task)))
+
+# within > between for both tasks (is PMAT structure valid?)
+encoding <- subset(network, Task == 'Encoding')
+pander(t.test(Strength ~ Measure, data=encoding, paired=TRUE))
+
+retrieval <- subset(network, Task == 'Retrieval')
+pander(t.test(Strength ~ Measure, data=retrieval, paired=TRUE))
+
+```
+
+```{r}
+### save data
+backgroundEncoding  <- connMatrixE # fisher z subject-specific connectivity matrices
+backgroundRetrieval <- connMatrixR # ""
+modularity <- mod
+density <- network
+ROIs <- seeds
+
+save(ROIs, backgroundEncoding, backgroundRetrieval, modularity, density, file = "Background_connectivity_data.RData")
+```

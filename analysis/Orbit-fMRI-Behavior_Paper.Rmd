@@ -1,0 +1,402 @@
+---
+title: "Orbit fMRI Behavioral Data"
+output: 
+  html_notebook: 
+    code_folding: hide
+    theme: spacelab
+    toc: true
+    toc_float: true
+    fontsize: 6pt
+---
+<style type="text/css">
+body{ /* Normal  */
+      font-size: 14px}
+td {  /* Table  */
+  font-size: 12px}
+h1.title {
+  font-size: 30px}
+h1 { /* Header 1 */
+  font-size: 24px}
+h2 { /* Header 2 */
+    font-size: 20px}
+code.r{ /* Code block */
+    font-size: 12px}
+</style>
+
+
+This report contains all analyses of Orbit fMRI *behavioral* data.  
+
+N = 28/34 -->  
+2 subjects did not complete the experiment due to anxiety/movement in the scanner and 4 subjects were excluded due to chance level behavior, defined as a mean absolute error of > 75 degrees (where chance = 90) in any condition (color, scene).  
+
+Mixture model functions are from: https://github.com/eddjberry/precision-mixture-model  
+
+
+```{r, include=FALSE}
+
+#### load in all necessary packages:
+library('ggplot2')
+library('tidyr')
+library('dplyr')
+library('ez')
+library('lsr')
+library('psych')
+library('knitr')
+library('pander')
+
+taskVer <- 'fMRI-behavior'
+### define computer path
+#myComp <- '/Users/memolab/Google Drive/'
+myComp <- '/Users/rosecooper/Documents/'
+
+### define all functions:
+source(paste(myComp,'Work/Methods/myFunctions/General/multiplot.R',sep = "")) 
+source(paste(myComp,'Work/Methods/myFunctions/BaysPrecision/mixture_model_functions.R',sep = "")) 
+
+se <- function(x) sqrt(var(x)/length(x))  #function to calculate SE
+ci <- function(x) (sqrt(var(x)/length(x)))*1.96  #function to calculate 95% confidence interval
+zscore <- function(x,data) (x - mean(data))/sd(data)  #allows values to be z scored relative to itself (x = data) or a different variable (x != data)
+
+
+### load in all behavioral data:
+myFile <- paste(myComp,'Work/Boston/ORBIT/analysis/',taskVer,'/AllData_',taskVer,'.csv',sep = "")
+allData <- data.frame(read.csv(myFile, header = TRUE))
+
+# add column for emotion confidence level:
+allData$EmotionMemory[allData$EmotionCorrect == 1 & allData$EmotionConfidence == 1] <- 1
+allData$EmotionMemory[allData$EmotionCorrect == 1 & allData$EmotionConfidence == 0] <- 0.5
+allData$EmotionMemory[allData$EmotionCorrect == 0] <- 0
+
+subjects <- unique(allData$SubID)
+NSubjs = length(subjects)
+
+```
+
+# Feature Errors
+Response - Study angle across all subjects plotted as density histograms per feature.  
+Overlayed is the best fitting mixture model pdf (vonMises + uniform)  
+```{r, fig.width=6,fig.height=2.5}
+
+### All Color and Scene
+### Fit mixture model to aggregate data (needs to be in radians):
+Color <- JV10_fit(wrap(allData$ColResp/180*pi), wrap(allData$ColStudy/180*pi))
+print(paste0("Color : % Correct = ", round(Color$B$Pt, digits = 4)))
+print(paste0("      : Precision = ", round(Color$B$K, digits = 4)))
+
+Scene <- JV10_fit(wrap(allData$SceneResp/180*pi), wrap(allData$SceStudy/180*pi))
+print(paste0("Scene : % Correct = ", round(Scene$B$Pt, digits = 4)))
+print(paste0("      : Precision = ", round(Scene$B$K, digits = 4)))
+
+### now get best fitting PDFs:
+range = seq(from = -pi, to = pi, by = pi/180)
+# 1. Get von Mises pdf based on aggregate precision
+yCol = vonmisespdf(range,0,Color$B$K)
+ySce = vonmisespdf(range,0,Scene$B$K)
+# scale so area of distribution = proportion correct
+yCol = yCol * (Color$B$Pt/(sum(yCol)))
+ySce = ySce * (Scene$B$Pt/(sum(ySce)))
+# 2. add guess rate (uniform component)
+yCol = data.frame(yCol + (Color$B$Pu/length(range)))
+ySce = data.frame(ySce + (Scene$B$Pu/length(range)))
+
+colnames(yCol)<- c("prob")
+yCol$error <- seq(from = -180, to = 180, by = 1)
+colnames(ySce)<- c("prob")
+ySce$error <- seq(from = -180, to = 180, by = 1)
+
+
+# Threshold for memory 'success' (at least 50% chance that error fits von Mises), rounded to nearest multiple of 3 (my unique angles):
+colT <-  max(abs(yCol$error[yCol$prob > (Color$B$Pu/length(range)*2)]))
+colT <- 3*round(colT/3) 
+sceT <-  max(abs(ySce$error[ySce$prob > (Scene$B$Pu/length(range))*2]))
+sceT <- 3*round(sceT/3) 
+print(paste("Threshold for color memory success at 50% <= ", colT, " degrees", sep = ""))
+print(paste("Threshold for scene memory success at 50% <= ", sceT, " degrees", sep = ""))
+
+# add on Color and Scene accuracy columns to alldata based on model threshold:
+allData$ColorCorrect[allData$ColAbsError <= colT] <- 1
+allData$ColorCorrect[allData$ColAbsError > colT] <- 0
+allData$SceneCorrect[allData$SceAbsError <= sceT] <- 1
+allData$SceneCorrect[allData$SceAbsError > sceT] <- 0
+
+# plot data with line at height of uniform distribution:
+p1 <- ggplot(allData, aes(x = ColError)) +
+    geom_histogram(bins = 61, color = 'white', fill = 'gray60', aes(y=..density..), 
+                   position=position_dodge(1)) + 
+    geom_line(data = yCol, aes(x = error, y = prob), color = 'coral2', size=1.5) +
+    xlab("Error") + ylab("p(Error)") +
+    scale_y_continuous(limits = c(0,0.020), expand = c(0,0), breaks = seq(0,0.020,by = 0.005)) + 
+    scale_x_continuous(expand = c(0,0), breaks = seq(-180,180,by = 60)) + 
+    ggtitle("Color Errors") +
+    theme(plot.title = element_text(hjust = 0.5, size=28), axis.line = element_line(colour = "black"), 
+          axis.text = element_text(size = 20), axis.title = element_text(size = 24),
+          panel.background = element_blank(),
+          legend.position="none", text = element_text(family="Helvetica"))  
+
+ggsave('Color_Errors.jpg', plot = p1, dpi = 300, width = 6.5, height = 5)
+
+p2 <- ggplot(allData, aes(x = SceError)) +
+    geom_histogram(bins = 61, color = 'white', fill = 'gray60', aes(y=..density..),
+                   position=position_dodge(1)) + 
+    geom_line(data = ySce, aes(x = error, y = prob), color = 'dodgerblue2', size=1.5) +
+    xlab("Error") + ylab("p(Error)") +
+    scale_y_continuous(limits = c(0,0.032), expand = c(0,0), breaks = seq(0,0.032,by = 0.008)) + 
+    scale_x_continuous(expand = c(0,0), breaks = seq(-180,180,by = 60)) + 
+    ggtitle("Scene errors") +
+    theme(plot.title = element_text(hjust = 0.5, size=28), axis.line = element_line(colour = "black"), 
+          axis.text = element_text(size = 20), axis.title = element_text(size = 24),
+          panel.background = element_blank(),
+          legend.position="none", text = element_text(family="Helvetica"))     
+
+ggsave('Scene_Errors.jpg', plot = p2, dpi = 300, width = 6.5, height = 5)
+
+multiplot(p1,p2, cols = 2)
+
+```
+
+# Subject Mixture Model by Color/Scene Feature
+```{r, fig.width=5,fig.height=3}
+
+### Compute mixture model estimates by subject and feature
+mixture <- data.frame(matrix(0, nrow = NSubjs*2, ncol = 4))
+names(mixture) <- c("SubID","Feature","pT","k")
+
+row <- 0
+for (idx in 1:length(subjects)) {
+    myData <- subset(allData, SubID == as.integer(subjects[idx]))
+
+    row = row + 1
+    mixture$SubID[row]   = myData$SubID[1]
+    mixture$Feature[row] = 'Color'
+    curModel <- JV10_fit(wrap(myData$ColResp/180*pi), wrap(myData$ColStudy/180*pi))
+    mixture$pT[row] <- curModel$B$Pt
+    mixture$k[row]  <- curModel$B$K
+
+    row = row + 1
+    mixture$SubID[row]   = myData$SubID[1]
+    mixture$Feature[row] = 'Scene'
+    curModel <- JV10_fit(wrap(myData$SceneResp/180*pi), wrap(myData$SceStudy/180*pi))
+    mixture$pT[row] <- curModel$B$Pt
+    mixture$k[row]  <- curModel$B$K
+  }#end of loop through subjects    
+
+mixture$SubID <- as.factor(mixture$SubID)
+mixture$Feature <- as.factor(mixture$Feature)
+mixture <- mixture %>% group_by(Feature) #group data by these factors
+
+
+# Memory Success (proportion correct)
+p1 <- ggplot(mixture, aes(x=Feature, y=pT, color=Feature, fill=Feature)) +
+    stat_summary(fun.y = mean, geom="bar", alpha = 0.4, position = position_dodge(1)) +
+    scale_fill_manual(values = c('coral2','dodgerblue2')) + 
+    scale_color_manual(values = c('coral2','dodgerblue2')) +
+    geom_dotplot(binaxis='y', stackdir='center', alpha = 0.8, position = position_dodge(1)) +
+    stat_summary(fun.data = mean_se, geom = "errorbar", fun.args = list(mult = 1.96),
+                 width = 0.4, color = "black", size = 0.6, position = position_dodge(1)) +
+    ggtitle("Memory Success") +  scale_y_continuous(expand = c(0,0), limits=c(0,1)) + 
+    theme(plot.title = element_text(hjust = 0.5, size=28), axis.line = element_line(colour = "black"), 
+          axis.text = element_text(size = 22), axis.title = element_text(size = 22),
+          panel.background = element_blank(),
+          legend.position="none", text = element_text(family="Helvetica"))
+
+# Precision summary
+p2 <- ggplot(mixture, aes(x=Feature, y=k, color=Feature, fill=Feature)) +
+    stat_summary(fun.y = mean, geom="bar", alpha = 0.4, position = position_dodge(1)) +
+    scale_fill_manual(values = c('coral2','dodgerblue2')) +
+    scale_color_manual(values = c('coral2','dodgerblue2')) +
+    geom_dotplot(binaxis='y', stackdir='center', alpha = 0.8, position = position_dodge(1)) +
+    stat_summary(fun.data = mean_se, geom = "errorbar", fun.args = list(mult = 1.96),
+                 width = 0.4, color = "black", size = 0.6, position = position_dodge(1)) +
+    ggtitle("Memory Precision") + scale_y_continuous(expand = c(0,0), limits=c(0,84)) + 
+    theme(plot.title = element_text(hjust = 0.5, size=28), axis.line = element_line(colour = "black"), 
+          axis.text = element_text(size = 22), axis.title = element_text(size = 22),
+          panel.background = element_blank(),
+          legend.position="none", text = element_text(family="Helvetica"))
+
+multiplot(p1,p2, cols = 2)
+
+pander(t.test(pT ~ Feature, data=mixture, paired = TRUE))
+pander(t.test(k ~ Feature, data=mixture, paired = TRUE))
+
+# for saving data in csv:
+pT <- subset(mixture, select = -c(k)) %>%
+       spread(key = Feature, value = pT)
+colnames(pT) <- c('SubID','ColorpT','ScenepT')
+k <- subset(mixture, select = -c(pT)) %>%
+       spread(key = Feature, value = k)
+colnames(k) <- c('SubID','Colork','Scenek')
+
+group_data <- merge.data.frame(pT,k,by='SubID') %>%
+               sortFrame(SubID)
+
+```
+
+## Emotion Memory
+Proportion correct and proportion of high confidence correct emotion responses  
+```{r, fig.width=3,fig.height=1.8}
+
+### Emotion accuracy (proportion correct)
+emotion <- allData %>% 
+                group_by(SubID) %>% 
+                 summarise(EmotionSuccess = mean(EmotionCorrect)) 
+group_data <- merge.data.frame(group_data, emotion, by = 'SubID')
+
+summary <- emotion %>%
+             summarise(EmotionCorrect = mean(EmotionSuccess), SE = se(EmotionSuccess))
+print(kable(summary))
+
+### Proportion of corect repsonses that were high confidence
+correctData <- subset(allData, EmotionCorrect == 1)
+confidence <- correctData %>% 
+                group_by(SubID) %>% 
+                 summarise(EmotionConfidence = mean(EmotionConfidence))
+group_data <- merge.data.frame(group_data, confidence, by = 'SubID')
+
+summary <- confidence %>%
+             summarise(EmotionConfidence = mean(EmotionConfidence), SE = se(EmotionConfidence))
+print(kable(summary))
+
+```
+
+# Memory Dependency
+## Retrieval Success
+Uses the dependent vs independent approach from Horner & Burgess (2013/2014) to estimate dependency of correct retrieval for each feature pair  
+```{r, fig.width=4,fig.height=3}
+
+dependency <- data.frame(matrix(0, nrow = NSubjs*3, ncol = 3))
+names(dependency) <- c("SubID","Pair","Difference")
+
+row <- 0
+for (idx in 1:length(subjects)) {
+    myData <- subset(allData, SubID == as.integer(subjects[idx]))
+   
+    for (pair in 1:3) {
+      if (pair == 1) {
+        name = 'Emotion-Color'
+        curAcc <- cbind(myData$EmotionCorrect,myData$ColorCorrect)
+      } else if (pair == 2) {
+        name = 'Emotion-Scene'
+        curAcc <- cbind(myData$EmotionCorrect,myData$SceneCorrect)
+      } else if (pair == 3) {
+        name = 'Color-Scene'
+        curAcc <- cbind(myData$ColorCorrect,myData$SceneCorrect)
+      }
+      
+      row = row + 1
+      dependency$SubID[row]   = myData$SubID[1]
+      dependency$Pair[row]    = name
+      data  = length(which(!rowSums(curAcc) ==1))/nrow(curAcc)
+      sumAcc <- colMeans(curAcc)
+      independent = ((sumAcc[1]*sumAcc[2])+((1-sumAcc[1])*(1-sumAcc[2])))
+      dependency$Difference[row] = data - independent
+     }
+  }#end of loop through subjects    
+
+dependency$Pair <- as.factor(dependency$Pair)
+
+# data vs independent model by feature
+success <- dependency %>% 
+              group_by(SubID, Pair)
+
+p1 <- ggplot(success, aes(x = Pair, y=Difference, fill=Pair)) +
+    stat_summary(fun.y = mean, geom="bar", alpha = 0.5) +
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1, alpha = 0.8) +
+    stat_summary(fun.data = mean_se, geom = "errorbar", fun.args = list(mult = 1.96),
+                 width = 0.4, color = "black", size = 0.6) +
+    scale_fill_manual(values = c('#66bd63','coral2','dodgerblue2')) + 
+    ylab("Data - Independent") + scale_y_continuous(limits = c(-0.12,0.24),
+                                                    expand = c(0,0),
+                                                    breaks = seq(-0.12,0.24,by = 0.06)) +
+    ggtitle("Retrieval Success Dependence") + geom_hline(yintercept = 0) +
+    scale_x_discrete(labels=c("Color\nScene","Color\nEmotion","Scene\nEmotion")) +
+    theme(plot.title = element_text(hjust = 0.5, size=28), axis.line = element_line(colour = "black"), 
+          axis.text = element_text(size = 20), axis.title = element_text(size = 24),
+          panel.background = element_blank(),
+          legend.position="none", text = element_text(family="Helvetica"))   
+
+plot(p1)
+ggsave('Correct_Dependency.jpg', plot = p1, dpi = 300, width = 6, height = 5)
+
+#t-tests, greater than 0?
+pander(t.test(success$Difference[success$Pair == 'Color-Scene'], mu=0))
+pander(t.test(success$Difference[success$Pair == 'Emotion-Color'], mu=0))
+pander(t.test(success$Difference[success$Pair == 'Emotion-Scene'], mu=0))
+
+# for saving data in csv:
+success <- success %>%
+               spread(key = Pair, value = Difference)
+group_data <- merge.data.frame(group_data,success,by='SubID') %>%
+                sortFrame(SubID)
+
+```
+
+### Retrieval Precision
+Computes the correlations between color and scene success (1 0) and precision (reversed 'correct' error).  
+```{r, fig.width=4,fig.height=3}
+
+dependency <- data.frame(matrix(0, nrow = NSubjs*3, ncol = 3))
+names(dependency) <- c("SubID","Pair","Dependency")
+
+row <- 0
+for (idx in 1:length(subjects)) {
+
+  for (pair in 1:3) {
+    row = row + 1
+    if (pair == 1) {
+       myData <- subset(allData, SubID == subjects[idx] & ColorCorrect == 1 & SceneCorrect == 1)
+       name = 'ColorP-SceneP'
+       dependency$Dependency[row]  = fisherz(cor(180 - myData$ColAbsError,180 - myData$SceAbsError))
+    } else if (pair == 2) {
+       myData <- subset(allData, SubID == subjects[idx] & SceneCorrect == 1)
+       name = 'ColorS-SceneP'
+       dependency$Dependency[row]  = fisherz(cor(myData$ColorCorrect,180 - myData$SceAbsError))
+    } else if (pair == 3) {
+       myData <- subset(allData, SubID == subjects[idx] & ColorCorrect == 1)
+       name = 'SceneS-ColorP'
+       dependency$Dependency[row]  = fisherz(cor(myData$SceneCorrect,180 - myData$ColAbsError))
+    }
+    dependency$SubID[row] = myData$SubID[1]
+    dependency$Pair[row]  = name
+   }
+  }#end of loop through subjects    
+
+dependency$Pair <- as.factor(dependency$Pair)
+
+# correlations by pair
+precision <- dependency %>% 
+              group_by(SubID, Pair)
+
+p1 <- ggplot(precision, aes(x = Pair, y=Dependency, fill=Pair)) +
+    stat_summary(fun.y = mean, geom="bar", alpha = 0.5) +
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=1, alpha = 0.8) +
+    stat_summary(fun.data = mean_se, geom = "errorbar", fun.args = list(mult = 1.96),
+                 width = 0.4, color = "black", size = 0.6) +
+    scale_fill_manual(values = c('#66bd63','coral2','dodgerblue2')) + 
+    ylab("Mean z") + scale_y_continuous(limits = c(-0.22,0.42), expand = c(0,0),
+                                        breaks = seq(-0.4,0.4,by = 0.1)) +
+    ggtitle("Retrieval Precision Dependence") + geom_hline(yintercept = 0) +
+    scale_x_discrete(labels=c("Color.P\nScene.P","Color.S\nScene.P","Scene.S\nColor.P")) +
+    theme(plot.title = element_text(hjust = 0.5, size=28), axis.line = element_line(colour = "black"), 
+          axis.text = element_text(size = 20), axis.title = element_text(size = 24),
+          panel.background = element_blank(),
+          legend.position="none", text = element_text(family="Helvetica"))   
+
+plot(p1)
+ggsave('Precision_Dependency.jpg', plot = p1, dpi = 300, width = 6, height = 5)
+
+#t-tests, greater than 0?
+pander(t.test(precision$Dependency[precision$Pair == 'ColorP-SceneP'], mu=0))
+pander(t.test(precision$Dependency[precision$Pair == 'ColorS-SceneP'], mu=0))
+pander(t.test(precision$Dependency[precision$Pair == 'SceneS-ColorP'], mu=0))
+
+# for saving data in csv:
+precision <- precision %>%
+               spread(key = Pair, value = Dependency)
+group_data <- merge.data.frame(group_data,precision,by='SubID') %>%
+                sortFrame(SubID)
+
+```
+
+```{r}
+write.csv(group_data, "Behavioral_data.csv", row.names=FALSE)
+```

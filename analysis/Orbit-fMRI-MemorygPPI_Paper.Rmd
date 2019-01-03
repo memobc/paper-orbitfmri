@@ -1,0 +1,274 @@
+---
+title: "Orbit fMRI - CONN glm ROI PPI Analyses"
+output:
+  html_notebook:
+    code_folding: hide
+    fontsize: 6pt
+    theme: spacelab
+    toc: yes
+    toc_float: yes
+  html_document:
+    df_print: paged
+    toc: yes
+---
+<style type="text/css">
+body{ /* Normal  */
+      font-size: 14px}
+td {  /* Table  */
+  font-size: 12px}
+h1.title {
+  font-size: 30px}
+h1 { /* Header 1 */
+  font-size: 24px}
+h2 { /* Header 2 */
+    font-size: 20px}
+code.r{ /* Code block */
+    font-size: 12px}
+</style>
+
+* gPPI analyses are conducted in CONN by predicting each target time series with a seed ROI, psychological parametric modulators, convolved with the HRF, and the seed x psych interaction terms.  
+
+* The connectivity change (interaction beta estimate) for each seed-target pair per subject and condition was then extracted and further analyzed at the group level here.  
+
+* Connectivity beta estimates reflects the postive or negative change in connectivity estimates with *increasing* memory during 'remember' events.   
+
+* Analyses use MNI-space unsmoothed data.  
+
+```{r, include=FALSE}
+
+library('ggplot2')
+library('gridExtra')
+library('grid')
+library('cowplot')
+library('ggpubr')
+library('ggridges')
+library('tidyr')
+library('dplyr')
+library('ez')
+library('lsr')
+library('psych')
+library('reshape2')
+library('knitr')
+library('pander')
+
+se <- function(x) sqrt(var(x)/length(x))  #function to calculate SE
+
+### define computer path
+#myComp <- '/Users/memolab/Google Drive/'
+myComp <- '/Users/rosecooper/Documents/'
+
+# where are my first level CONN matrices
+matrixPath <- paste(myComp,'Work/Boston/ORBIT/analysis/fMRI/Orbit/FunctionalConnectivity/conn-roiData/',sep="")
+
+### load in conn functions:
+source(paste(myComp,'MemoLab/Manuscripts/Orbit-fMRI/paper-OrbitfMRI-repo/analysis/gPPI_functions_paper.R',sep=""))
+
+space <- 'MNI-unsmoothed'
+
+seeds        <- c("ANG","PREC","PCC","RSC","PHC","pHIPP","aHIPP","PRC","AMYG","FUS","ITC","OFC") #no 'L' or 'R' after means bilateral
+ROIs         <- seeds
+networks     <- c(1,1,1,1,1,2,2,3,3,3,3,3)  #network assignments to match to above seeds
+networkNames <- c("PM","HIPP","AT")
+
+sOrder   <- c(3,11,7,12,8,9,1,10,2,4,5,6) #to re-order to above seeds whe R default to order alphabetically
+nOrder   <- c(3,2,1)
+
+event    <- 'Remember'
+type = 'greater'
+
+```
+
+# Memory Quality
+Change in connectivity between each target-seed pair with increasing memory detail (min 0, max 3 on any trial)  
+
+## Overall and Hipp connectivity
+```{r, fig.width=4,fig.height=4}
+
+model <- 'Overall-Complexity-noEmot'
+contrast <- "DetailRemembered"      # memory parametric modulator
+
+# GET PPI MATRIX ------------------------------------------------------------------
+### fmri subjects for this model:
+subjects = list.dirs(path = paste(matrixPath,model,'_ROI-to-ROI/',sep = ""), full.names = FALSE, recursive = FALSE)
+
+### get ppi matrix per subject for this contrast
+ppiMatrix <- format_conn(matrixPath, seeds, subjects, model, contrast, event)
+MemoryQualityConnectivity <- ppiMatrix
+
+### get overall change in connectivity with memory:
+meanConn <- data.frame(ConnectivityChange = apply(ppiMatrix, c(3), mean))
+sum <- meanConn %>% summarise(Mean.Connectivity = mean(ConnectivityChange), SE.Connectivity = se(ConnectivityChange))
+print(kable(sum))
+# test against zero
+pander(t.test(meanConn$ConnectivityChange, mu=0, alternative=type))
+
+
+### focus on on aHIPP and pHIPP in terms of mean inter-network connectivity change with PM and AT networks
+meanHipp <- mean_hipp_change(subjects, ppiMatrix, seeds, networks)
+p <- plot_hipp(meanHipp)
+plot(p)
+ggsave('Remember_Hipp-to-Network.jpg',plot=last_plot(),dpi=300,width=5,height=5)
+# Anova:
+pander(ezANOVA(data = meanHipp, dv = MeanConnectivity, wid = Subject, 
+        detailed = TRUE, within = .(Network,Region)))
+# test against zero
+pander(t.test(meanHipp$MeanConnectivity[meanHipp$Network == 'AT' & meanHipp$Region == 'aHIPP'], mu=0, alternative=type))
+pander(t.test(meanHipp$MeanConnectivity[meanHipp$Network == 'PM' & meanHipp$Region == 'aHIPP'], mu=0, alternative=type))
+pander(t.test(meanHipp$MeanConnectivity[meanHipp$Network == 'AT' & meanHipp$Region == 'pHIPP'], mu=0, alternative=type))
+pander(t.test(meanHipp$MeanConnectivity[meanHipp$Network == 'PM' & meanHipp$Region == 'pHIPP'], mu=0, alternative=type))
+
+```
+
+## Network connectivity
+```{r, fig.width=5,fig.height=4}
+
+# GET CONNECTIVITY CHANGE BY NETWORK ---------------------------------------------
+networkMatrix <- ppi_Network_connectivity(subjects, ppiMatrix, networks)
+
+### p-value for each network comparison:
+netStats <- get_network_pValues(networkMatrix, networkNames, nOrder, type)
+print(kable(netStats))
+
+### plot:
+p <- plot_Network(netStats, type)
+plot(p)
+ggsave('Remember_MemoryQuality_Network.jpg',plot=last_plot(),dpi=300,width=7.5,height=6)
+
+```
+
+## ROI-ROI connectivity
+```{r, fig.width=5,fig.height=4}
+
+### get p-values for each individual seed-target comparison
+ppiStats <- get_ppi_stats(ppiMatrix, seeds, sOrder, type)
+
+### plot mean PPI matrix
+p <- plot_meanPPI(ppiStats)
+plot(p)
+
+# now print the individually significant connections:
+print(kable(subset(ppiStats,sig == '*')))
+
+```
+
+# Color Precision
+Calculates the change in connectivity between each target-seed pair with increasing color precision
+## Overall connectivity
+```{r, fig.width=4,fig.height=4}
+
+model <- 'Features-SuccessPrecision-noEmot'
+contrast <- "ColorPrecision"      # memory parametric modulator
+
+# GET PPI MATRIX ------------------------------------------------------------------
+### fmri subjects for this model:
+subjects = list.dirs(path = paste(matrixPath,model,'_ROI-to-ROI/',sep = ""), full.names = FALSE, recursive = FALSE)
+
+### get ppi matrix per subject for this contrast
+ppiMatrix <- format_conn(matrixPath, seeds, subjects, model, contrast, event)
+ColorPrecisionConnectivity <- ppiMatrix
+
+### get overall change in connectivity with memory:
+meanConn <- data.frame(ConnectivityChange = apply(ppiMatrix, c(3), mean))
+sum <- meanConn %>% summarise(Mean.Connectivity = mean(ConnectivityChange), SE.Connectivity = se(ConnectivityChange))
+print(kable(sum))
+# test against zero
+pander(t.test(meanConn$ConnectivityChange, mu=0, alternative=type))
+
+```
+
+## Network connectivity
+```{r, fig.width=5,fig.height=4}
+
+# GET CONNECTIVITY CHANGE BY NETWORK ---------------------------------------------
+networkMatrix <- ppi_Network_connectivity(subjects, ppiMatrix, networks)
+
+### p-value for each network comparison:
+netStats <- get_network_pValues(networkMatrix, networkNames, nOrder, type)
+print(kable(netStats))
+
+### plot:
+p <- plot_Network(netStats, type)
+plot(p)
+ggsave('Remember_ColorPrecision_Network.jpg',plot=last_plot(),dpi=300,width=7.5,height=6)
+
+```
+
+## ROI-ROI connectivity
+Seed to target connections for PRC/AMYG/PHC/RSC
+```{r, fig.width=5,fig.height=4}
+
+### get p-values for each individual seed-target comparison
+ppiStats <- get_ppi_stats(ppiMatrix, seeds, sOrder, type)
+p <- plot_seed_connections(ppiMatrix, ppiStats, 'Color')
+plot(p)
+
+# now print the individually significant connections:
+connections <- subset(ppiStats, pSeed < .05 & (seeds == 'RSC' | seeds == 'PHC' | seeds == 'PRC' | seeds == 'AMYG'))
+connections <- connections[,-c(4,5,7)]
+print(kable(connections))
+
+```
+
+# Scene Precision
+Calculates the change in connectivity between each target-seed pair with increasing scene precision
+## Overall connectivity
+```{r, fig.width=4,fig.height=4}
+
+model <- 'Features-SuccessPrecision-noEmot'
+contrast <- "ScenePrecision"      # memory parametric modulator
+
+# GET PPI MATRIX ------------------------------------------------------------------
+### fmri subjects for this model:
+subjects = list.dirs(path = paste(matrixPath,model,'_ROI-to-ROI/',sep = ""), full.names = FALSE, recursive = FALSE)
+
+### get ppi matrix per subject for this contrast
+ppiMatrix <- format_conn(matrixPath, seeds, subjects, model, contrast, event)
+ScenePrecisionConnectivity <- ppiMatrix
+
+### get overall change in connectivity with memory:
+meanConn <- data.frame(ConnectivityChange = apply(ppiMatrix, c(3), mean))
+sum <- meanConn %>% summarise(Mean.Connectivity = mean(ConnectivityChange), SE.Connectivity = se(ConnectivityChange))
+print(kable(sum))
+# test against zero
+pander(t.test(meanConn$ConnectivityChange, mu=0, alternative=type))
+
+```
+
+## Network connectivity
+```{r, fig.width=5,fig.height=4}
+
+# GET CONNECTIVITY CHANGE BY NETWORK ---------------------------------------------
+networkMatrix <- ppi_Network_connectivity(subjects, ppiMatrix, networks)
+
+### p-value for each network comparison:
+netStats <- get_network_pValues(networkMatrix, networkNames, nOrder, type)
+print(kable(netStats))
+
+### plot:
+p <- plot_Network(netStats, type)
+plot(p)
+ggsave('Remember_ScenePrecision_Network.jpg',plot=last_plot(),dpi=300,width=7.5,height=6)
+
+```
+
+## ROI-ROI connectivity
+Seed to target connections for PRC/AMYG/PHC/RSC
+```{r, fig.width=5,fig.height=4}
+
+### get p-values for each individual seed-target comparison
+ppiStats <- get_ppi_stats(ppiMatrix, seeds, sOrder, type)
+p <- plot_seed_connections(ppiMatrix, ppiStats, 'Scene')
+plot(p)
+
+# now print the individually significant connections:
+connections <- subset(ppiStats, pSeed < .05 & (seeds == 'RSC' | seeds == 'PHC' | seeds == 'PRC' | seeds == 'AMYG'))
+connections <- connections[,-c(4,5,7)]
+print(kable(connections))
+
+```
+
+
+```{r}
+### save data
+save(ROIs, MemoryQualityConnectivity, ColorPrecisionConnectivity, ScenePrecisionConnectivity, file = "Memory_gPPI_data.RData")
+```

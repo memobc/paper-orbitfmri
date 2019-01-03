@@ -1,0 +1,138 @@
+---
+title: "Orbit fMRI - ROI Univariate Analyses"
+output:
+  html_notebook:
+    code_folding: hide
+    fontsize: 6pt
+    theme: spacelab
+    toc: yes
+    toc_float: yes
+  html_document:
+    df_print: paged
+    toc: yes
+---
+<style type="text/css">
+body{ /* Normal  */
+      font-size: 14px}
+td {  /* Table  */
+  font-size: 12px}
+h1.title {
+  font-size: 30px}
+h1 { /* Header 1 */
+  font-size: 24px}
+h2 { /* Header 2 */
+    font-size: 20px}
+h3 { /* Header 3 */
+    font-size: 18px}
+code.r{ /* Code block */
+    font-size: 12px}
+</style>
+
+* Mean first level beta estimates per bilateral ROI for univariate analyses.    
+* Analyses use MNI-space unsmoothed data.    
+
+```{r, include=FALSE}
+
+library('ggplot2')
+library('gridExtra')
+library('ggpubr')
+library('ggridges')
+library('tidyr')
+library('dplyr')
+library('ez')
+library('lsr')
+library('psych')
+library('reshape2')
+library('knitr')
+
+### define computer path
+#myComp <- '/Users/memolab/Google Drive/'
+myComp <- '/Users/rosecooper/Documents/'
+
+myDir <- paste(myComp,'Work/Boston/ORBIT/analysis/fMRI/Orbit/Univariate/',sep = "")
+
+### load in all functions:
+se <- function(x) sqrt(var(x)/length(x))  #function to calculate SE
+ci <- function(x) (sqrt(var(x)/length(x))) * 1.96  #function to calculate 95% SE
+
+roiOrd <- c(3,11,7,12,8,9,1,10,2,4,5,6)
+```
+
+# Remember - Overall Memory Quality
+```{r}
+
+ROIData <- read.csv(paste(myDir,'MeanROIBetavalues-Overall-Complexity-noEmot.csv',sep=""), header = TRUE, sep = ",")
+
+title    = 'Memory Quality'
+event    = 'Remember'
+contrast = 'DetailRemembered'
+
+ROIData <- subset(ROIData,Contrast == paste(event,'x',contrast,'^1',sep=""))
+
+#set factors in results matrices
+ROIData$SubID=as.factor(ROIData$SubID)
+ROIData$Contrast=as.factor(ROIData$Contrast)
+ROIData$ROI=as.factor(ROIData$ROI)
+ROIData$ROI = factor(ROIData$ROI,levels(ROIData$ROI)[roiOrd])
+ROIData <- ROIData %>% group_by(ROI)
+
+NSubjs = length(unique(ROIData$SubID))
+rois = levels(ROIData$ROI)
+```
+
+```{r}
+
+### test mean of each ROI against 0:
+curData <- ROIData
+cur_summary <- curData %>% 
+                 group_by(ROI) %>%
+                  summarise(Mean = mean(MeanBeta), SE = se(MeanBeta))
+
+# add '*' to means that are signficantly greater than 0
+# one-sample t-test for each ROI, FDR-corrected
+cur_summary$t   <- ''
+cur_summary$df   <- ''
+cur_summary$p   <- ''
+cur_summary$sig <- ''
+# one-sample t-test for each ROI and add significance to cur_summary
+for (r in 1:length(rois)) {
+  test <- t.test(curData$MeanBeta[curData$ROI == rois[r]], alternative = "greater", mu=0)
+  cur_summary$t[r]  <- test$statistic
+  cur_summary$df[r] <- test$parameter
+  cur_summary$p[r]  <- test$p.value
+}
+  
+# FDR-correct:
+PAdjust <- p.adjust(cur_summary$p, method = "fdr", n = length(cur_summary$p))
+cur_summary$p <- PAdjust #replace original p values with adjusted
+# add significance asterix:
+for (r in 1:nrow(cur_summary)) {
+   if (as.numeric(cur_summary$p[r]) < 0.05) {  #if significant FDR corrected, add asterix
+     cur_summary$sig[r] <- '*'
+   } 
+}  # end of loop through seeds 
+  
+print(kable(cur_summary))
+```
+
+```{r, fig.width=5,fig.height=3.5}
+
+# plots the mean ROI stats with 95% CI
+myCol <- c("dodgerblue2","dodgerblue2","dodgerblue2","dodgerblue2","dodgerblue2",
+           "mediumorchid","mediumorchid",
+           "firebrick2","firebrick2","firebrick2","firebrick2","firebrick2")
+
+ggplot(curData, aes(x=ROI, y=MeanBeta, fill = 'ROI')) + 
+   stat_summary(fun.y = mean, geom="bar", alpha = 1, color = "gray20", fill = 'gray60') +
+   geom_dotplot(binaxis='y', stackdir='center', dotsize=0.5, alpha = 0.8, fill = 'gray80') +
+   stat_summary(fun.data = mean_se, geom = "errorbar", fun.args = list(mult = 1.96), width = 0.45, color = "black", size = 0.65) +
+   xlab("ROI") + ylab("Mean Beta") + geom_hline(yintercept = 0) +
+   ggtitle(title) +
+   theme(plot.title = element_text(hjust = 0.5, size=28), axis.line = element_line(colour = "black"),
+       axis.text.x = element_text(angle=45, vjust=1, hjust=1, size=22, colour=myCol), 
+       axis.text.y = element_text(size=22), axis.title  = element_text(size=26),
+       panel.background = element_blank(), legend.position="none", text = element_text(family="Helvetica"))
+
+ggsave('Remember_Quality_Activity.jpg',plot=last_plot(),dpi=300,width=7.5,height=6)
+
+```
