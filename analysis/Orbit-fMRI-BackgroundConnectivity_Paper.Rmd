@@ -53,8 +53,8 @@ library('pander')
 se <- function(x) sqrt(var(x)/length(x))  #function to calculate SE
 
 ### define computer path
-#myComp <- '/Users/memolab/Google Drive/'
-myComp <- '/Users/rosecooper/Documents/'
+myComp <- '/Users/memolab/Google Drive/'
+#myComp <- '/Users/rosecooper/Documents/'
 
 # where are my first level CONN matrices
 matrixPath <- paste(myComp,'Work/Boston/ORBIT/analysis/fMRI/Orbit/FunctionalConnectivity/conn-roiData/',sep="")
@@ -167,7 +167,6 @@ plot(p)
 ggsave(paste('Modularity_',th,'.jpg',sep=""), plot = last_plot(), dpi = 300, width = 4.2, height = 5)
 
 # t-test on change in modularity:
-mod <- data.frame(mod)
 pander(t.test(Modularity ~ Task, data=mod, paired=TRUE))
 
 ```

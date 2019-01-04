@@ -48,7 +48,7 @@ mean_hipp_change<- function(subjects, ppiMatrix, seeds, networks){
         meanConn$Subject[row] <- subjects[s]
         meanConn$Network[row] <- name
         meanConn$Region[row]  <- hipp
-        # get mean of all seed and target connections (asymmetrical)
+        # get mean of all seed and target connections between hippocampus and network (asymmetrical)
         meanConn$MeanConnectivity[row] <- mean(c(curMatrix[seeds == hipp,networks == net],
                                                  curMatrix[networks == net,seeds == hipp]))
       }
@@ -144,7 +144,7 @@ get_network_pValues <- function(network_ppi, networkNames, nOrder, type){
       
       # one-sample t-test for this ROI-ROI connection across subjects
       stat <- t.test(ppiVec, mu=0, alternative = type)
-      networkStats$t[row] <- stat$statistic
+      networkStats$t[row]  <- stat$statistic
       networkStats$df[row] <- stat$parameter
       networkStats$p[row]  <- stat$p.value
     } # end of loop through targets
@@ -221,81 +221,63 @@ get_ppi_stats <- function(ppiMatrix, seeds, sOrder, type){
   # type      --> type of t-test - 'two-tailed', 'greater', 'less'
   
   ### OUTPUT:
-  # ppiPvalues  --> a data.frame with the FDR corrected p value per seed-target comparison and * to indicate < .05
+  # ppiStats  --> a data.frame with the FDR corrected p value per seed-target comparison and * to indicate < .05
   
-  ppiPVals = array(data = 1, c(nrow(ppiMatrix),ncol(ppiMatrix)))
-  ppiTVals = array(data = 0, c(nrow(ppiMatrix),ncol(ppiMatrix)))
-  for (seed in 1:nrow(ppiMatrix)) {
-    for (targ in 1:ncol(ppiMatrix)) {
-      if (seed != targ) {
-        ppiVec <- ppiMatrix[seed,targ,]
-        # one-sample t-test for this ROI-ROI connection across subjects
-        ppiPVals[seed,targ] <- t.test(ppiVec, mu=0, alternative = type)$p.value
-        ppiTVals[seed,targ] <- t.test(ppiVec, mu=0, alternative = type)$statistic
-      }
-    } # end of loop through targets
-  }  # end of loop through seeds
+  ppiPVals <- apply(ppiMatrix, c(1,2), function(x) t.test(x, mu = 0, alternative = type)$p.value)
+  diag(ppiPVals) <- 1
+  ppiTVals <- apply(ppiMatrix, c(1,2), function(x) t.test(x, mu = 0, alternative = type)$statistic)
+  diag(ppiTVals) <- 0
+  meanPPI <- apply(ppiMatrix, c(1,2), mean)
   
-  ### melt
+  ### melt p values
   ppiPVals <- data.frame(ppiPVals)
   colnames(ppiPVals) <- seeds
-  ppiPVals$seeds <-seeds
+  ppiPVals$seeds <-seeds #seeds = rows
   ppiPVals$seeds <- as.factor(ppiPVals$seeds)
   ppiPVals$seeds = factor(ppiPVals$seeds,levels(ppiPVals$seeds)[sOrder])
   melted_ppiPVals <- melt(ppiPVals, id="seeds", na.rm = TRUE)
   
-  ### melt
+  ### melt t values
   ppiTVals <- data.frame(ppiTVals)
   colnames(ppiTVals) <- seeds
-  ppiTVals$seeds <-seeds  #rows = seeds
+  ppiTVals$seeds <-seeds  #seeds = rows
   ppiTVals$seeds <- as.factor(ppiTVals$seeds)
   ppiTVals$seeds = factor(ppiTVals$seeds,levels(ppiTVals$seeds)[sOrder])
   melted_ppiTVals <- melt(ppiTVals, id="seeds", na.rm = TRUE)
   
   ## mean connectivity per connection:
-  meanPPI <- apply(ppiMatrix, c(1,2), mean)
   meanPPI <- data.frame(meanPPI)
   colnames(meanPPI) <- seeds
-  meanPPI$seeds <-seeds
+  meanPPI$seeds <-seeds  #seeds = rows
   meanPPI$seeds <- as.factor(meanPPI$seeds)
   meanPPI$seeds = factor(meanPPI$seeds,levels(meanPPI$seeds)[sOrder])
   melted_meanPPI <- melt(meanPPI, id="seeds", na.rm = TRUE)
   
   
+  ### merge all connection stats ###
+  melted_meanPPI <- merge(melted_meanPPI, melted_ppiTVals, by=c('seeds','variable'), sort=FALSE, suffixes = c('_conn','_t'))
+  melted_meanPPI <- merge(melted_meanPPI, melted_ppiPVals, by=c('seeds','variable'), sort=FALSE)
+  names <- colnames(melted_meanPPI)
+  names[names == "value"] <- 'pvalue'
+  names[names == 'variable'] <- 'targets'
+  colnames(melted_meanPPI) <- names
+  
   ## WHOLE MATRIX CORRECTION
-  melted_ppiPVals[melted_ppiPVals == 1] <- NA #remove diagonal so not included in multiple comparison correction
-  melted_ppiPAdjust <- p.adjust(melted_ppiPVals$value, method = "fdr", n = (sum(!is.na(melted_ppiPVals$value))))
-  melted_ppiPVals$pAll <- melted_ppiPAdjust #replace original p values with adjusted
+  melted_meanPPI$pvalue[melted_meanPPI$seeds == melted_meanPPI$targets] <- NA #remove diagonal so not included in multiple comparison correction
+  melted_ppiPAdjust <- p.adjust(melted_meanPPI$pvalue, method = "fdr", n = (sum(!is.na(melted_meanPPI$pvalue))))
+  melted_meanPPI$pFDRAll <- melted_ppiPAdjust
   
   ### SEED LEVEL CORRECTION:
-  # adjust for matrix-level comparisons
-  melted_ppiPVals[melted_ppiPVals == 1] <- NA #remove diagonal so not included in multiple comparison correction
   for (s in 1:length(seeds)) {
-    melted_ppiPAdjust <- p.adjust(melted_ppiPVals$value[melted_ppiPVals$seeds == seeds[s]], method = "fdr", n = length(seeds)-1)
-    melted_ppiPVals$pSeed[melted_ppiPVals$seeds == seeds[s]] <- melted_ppiPAdjust #replace original p values with adjusted
+    melted_ppiPAdjust <- p.adjust(melted_meanPPI$pvalue[melted_meanPPI$seeds == seeds[s]], method = "fdr", n = length(seeds)-1)
+    melted_meanPPI$pFDRSeed[melted_meanPPI$seeds == seeds[s]] <- melted_ppiPAdjust #replace original p values with adjusted
   }
   
   # add significance asterix for overlay on connection matrix:
-  melted_ppiPVals$sig <- ''
-  for (r in 1:nrow(melted_ppiPVals)) {
-    if (!is.na(melted_ppiPVals$value[r])) { 
-      if (as.numeric(melted_ppiPVals$pAll[r]) < 0.05) {  #if significant FDR corrected, add asterix
-        melted_ppiPVals$sig[r] <- '*'
-      } 
-    }
-  }  # end of loop through seeds 
+  melted_meanPPI$sig <- ''
+  melted_meanPPI$sig[as.numeric(melted_meanPPI$pFDRAll) < 0.05] <- '*'
   
-  # merge dataframes
-  ppiStats <- cbind(melted_meanPPI,melted_ppiPVals,melted_ppiTVals)
-  ppiStats <- ppiStats[,-c(4,5,10,11)]
-  names <- colnames(ppiStats)
-  names[names == 'variable'] <- 'targets'
-  names[names == "value"] <- 'connectivity'
-  names[names == "value.1"] <- 'p'
-  names[names == "value.2"] <- 't'
-  colnames(ppiStats) <- names
-  
-  return(ppiStats)
+  return(melted_meanPPI)
 }
 # ------------------------------------------------------------------------------------------------ #
 
@@ -314,15 +296,15 @@ plot_meanPPI <- function(ppiStats){
   ### OUTPUT:
   # geom_tile ggplot
   
-  max <- round(max(abs(ppiStats$connectivity)),digits=3)
-  min <- -(round(max(abs(ppiStats$connectivity)),digits=3))
+  max <- round(max(abs(ppiStats$value_conn)),digits=3)
+  min <- -(round(max(abs(ppiStats$value_conn)),digits=3))
   limits = c(min+(min*0.2),max+(max*0.2))
   
   myCol <- c("dodgerblue2","dodgerblue2","dodgerblue2","dodgerblue2","dodgerblue2",
              "mediumorchid","mediumorchid",
              "firebrick2","firebrick2","firebrick2","firebrick2","firebrick2")
   
-  p <- ggplot(data = ppiStats, aes(x=seeds, y=targets, fill=connectivity)) + 
+  p <- ggplot(data = ppiStats, aes(x=seeds, y=targets, fill=value_conn)) + 
     geom_tile(color = "white") +
     scale_fill_gradientn(colors = c("#6a51a3","#f7f7f7", "#ec7014"),
                          limit = limits, space = "Lab", name="Change in\nConnectivity") +
@@ -344,16 +326,10 @@ plot_meanPPI <- function(ppiStats){
 plot_seed_connections <- function(ppiMatrix, ppiStats, feature){
   
   # grabs subject data points for significant connections and plots:
-  connections <- subset(ppiStats, pSeed < .05 & (seeds == 'RSC' | seeds == 'PHC' | seeds == 'PRC' | seeds == 'AMYG'))
+  connections <- subset(ppiStats, pFDRSeed < .05 & (seeds == 'RSC' | seeds == 'PHC' | seeds == 'PRC' | seeds == 'AMYG'))
   nConn <- nrow(connections)  
-  #get connection names:
-  cNames <- ''
-  for (c in 1:nConn) {
-    cNames <- c(cNames, paste(connections$seeds[c],'-\n',connections$targets[c],sep = ""))
-  }
-  cNames <- cNames[-1]
-  
-  # get subject data per connection
+
+  # get subject data per connection (only have mean value storedin ppiStats)
   nSub <- dim(ppiMatrix)[3]
   subData <- data.frame(array(NA, c(nSub*nConn,3)))
   colnames(subData) <- c('SubID','Connection','Beta')
@@ -361,12 +337,10 @@ plot_seed_connections <- function(ppiMatrix, ppiStats, feature){
   for (s in 1:nSub) {
     for (c in 1:nConn) {
       row = row+1
-      cROIs <- strsplit(cNames[c], '-\n') #get seed and target names
-      seedIdx <- seeds == cROIs[[1]][1]
-      targIdx <- seeds == cROIs[[1]][2]
-      
+      seedIdx <- seeds == connections$seeds[c]
+      targIdx <- seeds == connections$targets[c]
       subData$SubID[row] <- s
-      subData$Connection[row] <- cNames[c]
+      subData$Connection[row] <- paste(connections$seeds[c],'-\n',connections$targets[c],sep = "")
       subData$Beta[row] <- ppiMatrix[seedIdx,targIdx,s]
     }
   }

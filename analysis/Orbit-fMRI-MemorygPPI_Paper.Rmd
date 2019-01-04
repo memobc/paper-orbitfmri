@@ -54,8 +54,8 @@ library('pander')
 se <- function(x) sqrt(var(x)/length(x))  #function to calculate SE
 
 ### define computer path
-#myComp <- '/Users/memolab/Google Drive/'
-myComp <- '/Users/rosecooper/Documents/'
+myComp <- '/Users/memolab/Google Drive/'
+#myComp <- '/Users/rosecooper/Documents/'
 
 # where are my first level CONN matrices
 matrixPath <- paste(myComp,'Work/Boston/ORBIT/analysis/fMRI/Orbit/FunctionalConnectivity/conn-roiData/',sep="")
@@ -203,8 +203,8 @@ p <- plot_seed_connections(ppiMatrix, ppiStats, 'Color')
 plot(p)
 
 # now print the individually significant connections:
-connections <- subset(ppiStats, pSeed < .05 & (seeds == 'RSC' | seeds == 'PHC' | seeds == 'PRC' | seeds == 'AMYG'))
-connections <- connections[,-c(4,5,7)]
+connections <- subset(ppiStats, pFDRSeed < .05 & (seeds == 'RSC' | seeds == 'PHC' | seeds == 'PRC' | seeds == 'AMYG'))
+connections <- connections[,-c(5,6,8)]
 print(kable(connections))
 
 ```
@@ -261,8 +261,8 @@ p <- plot_seed_connections(ppiMatrix, ppiStats, 'Scene')
 plot(p)
 
 # now print the individually significant connections:
-connections <- subset(ppiStats, pSeed < .05 & (seeds == 'RSC' | seeds == 'PHC' | seeds == 'PRC' | seeds == 'AMYG'))
-connections <- connections[,-c(4,5,7)]
+connections <- subset(ppiStats, pFDRSeed < .05 & (seeds == 'RSC' | seeds == 'PHC' | seeds == 'PRC' | seeds == 'AMYG'))
+connections <- connections[,-c(5,6,8)]
 print(kable(connections))
 
 ```
