@@ -46,8 +46,8 @@ library('pander')
 
 taskVer <- 'fMRI-behavior'
 ### define computer path
-#myComp <- '/Users/memolab/Google Drive/'
-myComp <- '/Users/rosecooper/Documents/'
+myComp <- '/Users/memolab/Google Drive/'
+#myComp <- '/Users/rosecooper/Documents/'
 
 ### define all functions:
 source(paste(myComp,'Work/Methods/myFunctions/General/multiplot.R',sep = "")) 
@@ -285,10 +285,10 @@ for (idx in 1:length(subjects)) {
       row = row + 1
       dependency$SubID[row]   = myData$SubID[1]
       dependency$Pair[row]    = name
-      data  = length(which(!rowSums(curAcc) ==1))/nrow(curAcc)
+      data  = sum(!rowSums(curAcc) == 1)/nrow(curAcc) #actual dependency of the data (proportion of times both remembered or forgotten)
       sumAcc <- colMeans(curAcc)
-      independent = ((sumAcc[1]*sumAcc[2])+((1-sumAcc[1])*(1-sumAcc[2])))
-      dependency$Difference[row] = data - independent
+      independent = (sumAcc[1]*sumAcc[2])+((1-sumAcc[1])*(1-sumAcc[2])) #dependency of data expected based on performance (assuming actually independent)
+      dependency$Difference[row] = data - independent #degree to which features are more/less dependent in memory than expected by chance (based on performance)
      }
   }#end of loop through subjects    
 
@@ -304,13 +304,14 @@ p1 <- ggplot(success, aes(x = Pair, y=Difference, fill=Pair)) +
     stat_summary(fun.data = mean_se, geom = "errorbar", fun.args = list(mult = 1.96),
                  width = 0.4, color = "black", size = 0.6) +
     scale_fill_manual(values = c('#66bd63','coral2','dodgerblue2')) + 
-    ylab("Data - Independent") + scale_y_continuous(limits = c(-0.12,0.24),
+    ylab("Dependency") + scale_y_continuous(limits = c(-0.12,0.24),
                                                     expand = c(0,0),
                                                     breaks = seq(-0.12,0.24,by = 0.06)) +
     ggtitle("Retrieval Success Dependence") + geom_hline(yintercept = 0) +
     scale_x_discrete(labels=c("Color\nScene","Color\nEmotion","Scene\nEmotion")) +
     theme(plot.title = element_text(hjust = 0.5, size=28), axis.line = element_line(colour = "black"), 
-          axis.text = element_text(size = 20), axis.title = element_text(size = 24),
+          axis.text.x = element_text(size = 22), axis.text.y = element_text(size = 20),
+          axis.title = element_text(size = 24),
           panel.background = element_blank(),
           legend.position="none", text = element_text(family="Helvetica"))   
 
@@ -377,7 +378,8 @@ p1 <- ggplot(precision, aes(x = Pair, y=Dependency, fill=Pair)) +
     ggtitle("Retrieval Precision Dependence") + geom_hline(yintercept = 0) +
     scale_x_discrete(labels=c("Color.P\nScene.P","Color.S\nScene.P","Scene.S\nColor.P")) +
     theme(plot.title = element_text(hjust = 0.5, size=28), axis.line = element_line(colour = "black"), 
-          axis.text = element_text(size = 20), axis.title = element_text(size = 24),
+          axis.text.x = element_text(size = 22), axis.text.y = element_text(size = 20),
+          axis.title = element_text(size = 24),
           panel.background = element_blank(),
           legend.position="none", text = element_text(family="Helvetica"))   
 

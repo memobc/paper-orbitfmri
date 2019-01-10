@@ -48,7 +48,7 @@ mean_hipp_change<- function(subjects, ppiMatrix, seeds, networks){
         meanConn$Subject[row] <- subjects[s]
         meanConn$Network[row] <- name
         meanConn$Region[row]  <- hipp
-        # get mean of all seed and target connections between hippocampus and network (asymmetrical)
+        # get mean of all seed (row) and target (column) connections between hippocampus and network (bidirectional, asymmetrical)
         meanConn$MeanConnectivity[row] <- mean(c(curMatrix[seeds == hipp,networks == net],
                                                  curMatrix[networks == net,seeds == hipp]))
       }
@@ -228,6 +228,7 @@ get_ppi_stats <- function(ppiMatrix, seeds, sOrder, type){
   ppiTVals <- apply(ppiMatrix, c(1,2), function(x) t.test(x, mu = 0, alternative = type)$statistic)
   diag(ppiTVals) <- 0
   meanPPI <- apply(ppiMatrix, c(1,2), mean)
+  diag(meanPPI) <- NA
   
   ### melt p values
   ppiPVals <- data.frame(ppiPVals)
@@ -235,7 +236,7 @@ get_ppi_stats <- function(ppiMatrix, seeds, sOrder, type){
   ppiPVals$seeds <-seeds #seeds = rows
   ppiPVals$seeds <- as.factor(ppiPVals$seeds)
   ppiPVals$seeds = factor(ppiPVals$seeds,levels(ppiPVals$seeds)[sOrder])
-  melted_ppiPVals <- melt(ppiPVals, id="seeds", na.rm = TRUE)
+  melted_ppiPVals <- melt(ppiPVals, id="seeds", na.rm = FALSE)
   
   ### melt t values
   ppiTVals <- data.frame(ppiTVals)
@@ -243,7 +244,7 @@ get_ppi_stats <- function(ppiMatrix, seeds, sOrder, type){
   ppiTVals$seeds <-seeds  #seeds = rows
   ppiTVals$seeds <- as.factor(ppiTVals$seeds)
   ppiTVals$seeds = factor(ppiTVals$seeds,levels(ppiTVals$seeds)[sOrder])
-  melted_ppiTVals <- melt(ppiTVals, id="seeds", na.rm = TRUE)
+  melted_ppiTVals <- melt(ppiTVals, id="seeds", na.rm = FALSE)
   
   ## mean connectivity per connection:
   meanPPI <- data.frame(meanPPI)
@@ -251,7 +252,7 @@ get_ppi_stats <- function(ppiMatrix, seeds, sOrder, type){
   meanPPI$seeds <-seeds  #seeds = rows
   meanPPI$seeds <- as.factor(meanPPI$seeds)
   meanPPI$seeds = factor(meanPPI$seeds,levels(meanPPI$seeds)[sOrder])
-  melted_meanPPI <- melt(meanPPI, id="seeds", na.rm = TRUE)
+  melted_meanPPI <- melt(meanPPI, id="seeds", na.rm = FALSE)
   
   
   ### merge all connection stats ###
@@ -284,7 +285,7 @@ get_ppi_stats <- function(ppiMatrix, seeds, sOrder, type){
 
 
 ## 8. Plot mean ppi matrix -----------------------------------------------------------------------  #
-plot_meanPPI <- function(ppiStats){
+plot_meanPPI <- function(ppiStats, star, upper){
   
   ### INPUT:
   # ppiMatrix  --> a matrix of size seed x target x subject containing the psychologicalxphysiological beta estimates
@@ -296,9 +297,7 @@ plot_meanPPI <- function(ppiStats){
   ### OUTPUT:
   # geom_tile ggplot
   
-  max <- round(max(abs(ppiStats$value_conn)),digits=3)
-  min <- -(round(max(abs(ppiStats$value_conn)),digits=3))
-  limits = c(min+(min*0.2),max+(max*0.2))
+  limits = c(-(upper-0.4),upper)
   
   myCol <- c("dodgerblue2","dodgerblue2","dodgerblue2","dodgerblue2","dodgerblue2",
              "mediumorchid","mediumorchid",
@@ -306,15 +305,19 @@ plot_meanPPI <- function(ppiStats){
   
   p <- ggplot(data = ppiStats, aes(x=seeds, y=targets, fill=value_conn)) + 
     geom_tile(color = "white") +
-    scale_fill_gradientn(colors = c("#6a51a3","#f7f7f7", "#ec7014"),
+    scale_fill_gradientn(colors = c("#6a51a3","#f7f7f7","#ec7014"),
                          limit = limits, space = "Lab", name="Change in\nConnectivity") +
     xlab('Seed') + ylab('Target') +
-    geom_text(aes(label = sig, x = seeds, y = targets), size = 12, na.rm = TRUE, show.legend = FALSE) +
     theme(axis.line = element_line(colour = "black"),
           axis.text.x = element_text(angle=45, vjust=1, hjust=1, size=20, colour=myCol), 
           axis.text.y = element_text(angle=45, vjust=0, hjust=1, size=20, colour=myCol), 
           axis.title = element_text(size=28,family="Helvetica"),
           panel.background = element_blank())
+  
+  # mark significant connections
+  if (star == 1) {
+    p <- p + geom_text(aes(label = sig, x = seeds, y = targets), size = 12, na.rm = TRUE, show.legend = FALSE)
+  }
   
   return(p)
 }
@@ -323,7 +326,7 @@ plot_meanPPI <- function(ppiStats){
 
 
 ## 9. plot invidual connection means -------------------------------------------- #
-plot_seed_connections <- function(ppiMatrix, ppiStats, feature){
+plot_seed_connections <- function(ppiMatrix, ppiStats, feature, seeds){
   
   # grabs subject data points for significant connections and plots:
   connections <- subset(ppiStats, pFDRSeed < .05 & (seeds == 'RSC' | seeds == 'PHC' | seeds == 'PRC' | seeds == 'AMYG'))
@@ -363,10 +366,91 @@ plot_seed_connections <- function(ppiMatrix, ppiStats, feature){
     geom_hline(yintercept = 0) + ylab("Mean Beta") +
     ggtitle(paste('Connections Tracking\n',feature,'Precision',sep= " ")) +
     theme(plot.title = element_text(hjust = 0.5, size=28), axis.line = element_line(colour = "black"), 
-          axis.text = element_text(size = 22), axis.title = element_text(size = 24), panel.background = element_blank(),
+          axis.text = element_text(size = 20), axis.title = element_text(size = 24), panel.background = element_blank(),
           legend.position = "none", text = element_text(family="Helvetica")) 
   
   return(p)
 }
+# ------------------------------------------------------------------------------------------------ #
 
-######################################################
+
+
+## 10. Overall pattern similarity of color and scene precision ppis --------------------------- #
+feature_similarity <- function(colorPPI, scenePPI){
+  
+  # calculates the pearson correlation (fisher z transformed) between 
+  # color and scene precision ppi matrices within subject
+  
+  ps <- data.frame(array(NA, c(length(subjects),2)))
+  colnames(ps) <- c('Subject','Similarity')
+  for (s in 1:length(subjects)) {
+    colMatrix <- colorPPI[,,s]
+    diag(colMatrix) <- NA  #will want to remove diagnonal before computing correlation
+    sceMatrix <- scenePPI[,,s]
+    diag(sceMatrix) <- NA
+    
+    # vectorize asymmetrical matrices, removing NA diagonal
+    colMatrix <- colMatrix[!is.na(colMatrix)]
+    sceMatrix <- sceMatrix[!is.na(sceMatrix)]
+    
+    ps$Subject[s] <- s
+    ps$Similarity[s] <- fisherz(cor(colMatrix, sceMatrix, method = "pearson"))
+  }
+  ps$Subject <- as.factor(ps$Subject)
+
+  return(ps)
+}
+# ------------------------------------------------------------------------------------------------------ #
+
+
+## 11. Color vs Scene for PM and AT seeds (from result of seed connections) ---------------------------- #
+feature_connections <- function(colorPPI, scenePPI, seeds){
+  
+  # creates data frame and plot to compare PM and AT seed connections to ANG with increasing color/
+  # scene memory precision
+  
+  myPM       <- c('RSC','PHC')
+  myAT       <- c('PRC','AMYG')
+  myTargets  <- c('ANG','PREC')
+  myFeatures <- c('Color','Scene')
+
+  nSub <- dim(colorPPI)[3]
+  subData <- data.frame(array(NA, c(nSub*4,4)))
+  colnames(subData) <- c('SubID','Feature','SeedNetwork','Connectivity')
+  row = 0
+  for (s in 1:nSub) {
+    for (f in myFeatures) {
+      # get current ppi matrix for this subject and feature
+      if (f == 'Color') {
+        curPPI <- colorPPI[,,s]
+      } else if (f == 'Scene') {
+        curPPI <- scenePPI[,,s]
+      }
+      # loop over seed network
+      for (n in 1:2) {
+        if (n == 1) {
+          mySeeds <- myPM
+          network <- 'PM'
+        } else if (n == 2) {
+          mySeeds <- myAT
+          network <- 'AT'
+        }
+        connections <- curPPI[seeds == mySeeds[1] | seeds == mySeeds[2],
+                              seeds == myTargets[1] | seeds == myTargets[2]]
+        row = row + 1
+        subData$SubID[row] <- s
+        subData$Feature[row] <- f
+        subData$SeedNetwork[row] <- network
+        subData$Connectivity[row] <- mean(connections)
+      }
+    }
+  }
+  
+  # plot:
+  subData$SubID <- as.factor(subData$SubID)
+  subData$Feature <- as.factor(subData$Feature)
+  subData$SeedNetwork <- as.factor(subData$SeedNetwork)
+
+  return(subData)
+}
+# ------------------------------------------------------------------------------------------------------ #

@@ -93,7 +93,7 @@ subjects = list.dirs(path = paste(matrixPath,model,'_ROI-to-ROI/',sep = ""), ful
 
 ### get ppi matrix per subject for this contrast
 ppiMatrix <- format_conn(matrixPath, seeds, subjects, model, contrast, event)
-MemoryQualityConnectivity <- ppiMatrix
+MemoryQualityPPI <- ppiMatrix
 
 ### get overall change in connectivity with memory:
 meanConn <- data.frame(ConnectivityChange = apply(ppiMatrix, c(3), mean))
@@ -103,7 +103,7 @@ print(kable(sum))
 pander(t.test(meanConn$ConnectivityChange, mu=0, alternative=type))
 
 
-### focus on on aHIPP and pHIPP in terms of mean inter-network connectivity change with PM and AT networks
+### focus on on aHIPP and pHIPP in terms of mean inter-network connectivity change with PM and AT networks (both as seeds and targets)
 meanHipp <- mean_hipp_change(subjects, ppiMatrix, seeds, networks)
 p <- plot_hipp(meanHipp)
 plot(p)
@@ -143,7 +143,7 @@ ggsave('Remember_MemoryQuality_Network.jpg',plot=last_plot(),dpi=300,width=7.5,h
 ppiStats <- get_ppi_stats(ppiMatrix, seeds, sOrder, type)
 
 ### plot mean PPI matrix
-p <- plot_meanPPI(ppiStats)
+p <- plot_meanPPI(ppiStats, 1, 2.6)
 plot(p)
 
 # now print the individually significant connections:
@@ -165,7 +165,7 @@ subjects = list.dirs(path = paste(matrixPath,model,'_ROI-to-ROI/',sep = ""), ful
 
 ### get ppi matrix per subject for this contrast
 ppiMatrix <- format_conn(matrixPath, seeds, subjects, model, contrast, event)
-ColorPrecisionConnectivity <- ppiMatrix
+ColorPrecisionPPI <- ppiMatrix
 
 ### get overall change in connectivity with memory:
 meanConn <- data.frame(ConnectivityChange = apply(ppiMatrix, c(3), mean))
@@ -194,13 +194,15 @@ ggsave('Remember_ColorPrecision_Network.jpg',plot=last_plot(),dpi=300,width=7.5,
 ```
 
 ## ROI-ROI connectivity
-Seed to target connections for PRC/AMYG/PHC/RSC
 ```{r, fig.width=5,fig.height=4}
 
 ### get p-values for each individual seed-target comparison
 ppiStats <- get_ppi_stats(ppiMatrix, seeds, sOrder, type)
-p <- plot_seed_connections(ppiMatrix, ppiStats, 'Color')
+
+# plot significant PRC/AMYG/PHC/RSC connections
+p <- plot_seed_connections(ppiMatrix, ppiStats, 'Color', seeds)
 plot(p)
+ggsave('Remember_ColorPrecision_Connections.jpg',plot=last_plot(),dpi=300,width=6,height=4.5)
 
 # now print the individually significant connections:
 connections <- subset(ppiStats, pFDRSeed < .05 & (seeds == 'RSC' | seeds == 'PHC' | seeds == 'PRC' | seeds == 'AMYG'))
@@ -223,7 +225,7 @@ subjects = list.dirs(path = paste(matrixPath,model,'_ROI-to-ROI/',sep = ""), ful
 
 ### get ppi matrix per subject for this contrast
 ppiMatrix <- format_conn(matrixPath, seeds, subjects, model, contrast, event)
-ScenePrecisionConnectivity <- ppiMatrix
+ScenePrecisionPPI <- ppiMatrix
 
 ### get overall change in connectivity with memory:
 meanConn <- data.frame(ConnectivityChange = apply(ppiMatrix, c(3), mean))
@@ -252,13 +254,15 @@ ggsave('Remember_ScenePrecision_Network.jpg',plot=last_plot(),dpi=300,width=7.5,
 ```
 
 ## ROI-ROI connectivity
-Seed to target connections for PRC/AMYG/PHC/RSC
 ```{r, fig.width=5,fig.height=4}
 
 ### get p-values for each individual seed-target comparison
 ppiStats <- get_ppi_stats(ppiMatrix, seeds, sOrder, type)
-p <- plot_seed_connections(ppiMatrix, ppiStats, 'Scene')
+
+# plot significant PRC/AMYG/PHC/RSC connections
+p <- plot_seed_connections(ppiMatrix, ppiStats, 'Scene', seeds)
 plot(p)
+ggsave('Remember_ScenePrecision_Connections.jpg',plot=last_plot(),dpi=300,width=7,height=4.5)
 
 # now print the individually significant connections:
 connections <- subset(ppiStats, pFDRSeed < .05 & (seeds == 'RSC' | seeds == 'PHC' | seeds == 'PRC' | seeds == 'AMYG'))
@@ -267,8 +271,36 @@ print(kable(connections))
 
 ```
 
+# Color vs Scene Connections
+a) Similarity - pearson's correlation - between the connectivity change patterns associated with item color and spatial precision  
+b) PM seed (PHC & RSC) vs AT seed (PRC & AMYG) to ANG/PREC by feature  
+```{r, fig.width=4,fig.height=4}
+
+# a) calculate the overall pattern simiarity between the color precision and scene precision ROIxROI matrices within each subject
+similarity <- feature_similarity(ColorPrecisionPPI, ScenePrecisionPPI)
+sum <- similarity %>% summarise(Mean.Z = mean(Similarity), SE.Z = se(Similarity))
+print(kable(sum))
+# test against zero
+pander(t.test(similarity$Similarity, mu=0, alternative=type))
+
+# b) compare PM and AT seeds to ANG/PREC by feature
+features <- feature_connections(ColorPrecisionPPI, ScenePrecisionPPI, seeds)
+sum <- features %>% group_by(SeedNetwork, Feature) %>%
+                     summarise(Conn = mean(Connectivity), SE.Conn = se(Connectivity))
+print(kable(sum))
+
+# Anova:
+pander(ezANOVA(data = features, dv = Connectivity, wid = SubID, 
+        detailed = TRUE, within = .(SeedNetwork,Feature)))
+
+# t-test for PM (color vs scene):
+pander(t.test(Connectivity ~ Feature, data=features[features$SeedNetwork == 'PM',], paired=TRUE))
+# t-test for AT (color vs scene):
+pander(t.test(Connectivity ~ Feature, data=features[features$SeedNetwork == 'AT',], paired=TRUE))
+
+```
 
 ```{r}
 ### save data
-save(ROIs, MemoryQualityConnectivity, ColorPrecisionConnectivity, ScenePrecisionConnectivity, file = "Memory_gPPI_data.RData")
+save(ROIs, MemoryQualityPPI, ColorPrecisionPPI, ScenePrecisionPPI, file = "Memory_gPPI_data.RData")
 ```
