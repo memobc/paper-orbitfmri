@@ -450,7 +450,19 @@ feature_connections <- function(colorPPI, scenePPI, seeds){
   subData$SubID <- as.factor(subData$SubID)
   subData$Feature <- as.factor(subData$Feature)
   subData$SeedNetwork <- as.factor(subData$SeedNetwork)
+  
+  p <- ggplot(subData, aes(x=Feature, y=Connectivity, fill=SeedNetwork)) +
+    stat_summary(fun.y = mean, geom="bar", alpha = 0.8, color = 'gray10', position=position_dodge(1)) +
+    geom_dotplot(binaxis='y', stackdir='center', dotsize=0.6, alpha = 0.6, position=position_dodge(1)) +
+    stat_summary(fun.data = mean_se, geom = "errorbar", fun.args = list(mult = 1.96),
+                 width = 0.45, color = "black", size = 0.65, position=position_dodge(1)) +
+    scale_fill_manual(values = c('coral2','dodgerblue2')) + geom_hline(yintercept = 0) +
+    ylab("Mean Beta") +
+    ggtitle("Change in Connectivity\nto ANG/PREC") +
+    theme(plot.title = element_text(hjust = 0.5, size=28), axis.line = element_line(colour = "black"), 
+          axis.text = element_text(size = 22), axis.title = element_text(size = 24), panel.background = element_blank(),
+          text = element_text(family="Helvetica")) 
 
-  return(subData)
+  return(list(subData,p))
 }
 # ------------------------------------------------------------------------------------------------------ #

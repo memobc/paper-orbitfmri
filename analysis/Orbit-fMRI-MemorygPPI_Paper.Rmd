@@ -54,8 +54,8 @@ library('pander')
 se <- function(x) sqrt(var(x)/length(x))  #function to calculate SE
 
 ### define computer path
-myComp <- '/Users/memolab/Google Drive/'
-#myComp <- '/Users/rosecooper/Documents/'
+#myComp <- '/Users/memolab/Google Drive/'
+myComp <- '/Users/rosecooper/Documents/'
 
 # where are my first level CONN matrices
 matrixPath <- paste(myComp,'Work/Boston/ORBIT/analysis/fMRI/Orbit/FunctionalConnectivity/conn-roiData/',sep="")
@@ -73,8 +73,8 @@ networkNames <- c("PM","HIPP","AT")
 sOrder   <- c(3,11,7,12,8,9,1,10,2,4,5,6) #to re-order to above seeds whe R default to order alphabetically
 nOrder   <- c(3,2,1)
 
-event    <- 'Remember'
-type = 'greater'
+event <- 'Remember'
+type  <- 'greater'
 
 ```
 
@@ -274,7 +274,7 @@ print(kable(connections))
 # Color vs Scene Connections
 a) Similarity - pearson's correlation - between the connectivity change patterns associated with item color and spatial precision  
 b) PM seed (PHC & RSC) vs AT seed (PRC & AMYG) to ANG/PREC by feature  
-```{r, fig.width=4,fig.height=4}
+```{r, fig.width=5,fig.height=5}
 
 # a) calculate the overall pattern simiarity between the color precision and scene precision ROIxROI matrices within each subject
 similarity <- feature_similarity(ColorPrecisionPPI, ScenePrecisionPPI)
@@ -283,20 +283,24 @@ print(kable(sum))
 # test against zero
 pander(t.test(similarity$Similarity, mu=0, alternative=type))
 
-# b) compare PM and AT seeds to ANG/PREC by feature
+# b) compare PM and AT seeds to common ANG/PREC targets by feature
 features <- feature_connections(ColorPrecisionPPI, ScenePrecisionPPI, seeds)
-sum <- features %>% group_by(SeedNetwork, Feature) %>%
+feature_data <- features[[1]]
+sum <- feature_data %>% group_by(SeedNetwork, Feature) %>%
                      summarise(Conn = mean(Connectivity), SE.Conn = se(Connectivity))
 print(kable(sum))
 
 # Anova:
-pander(ezANOVA(data = features, dv = Connectivity, wid = SubID, 
+pander(ezANOVA(data = feature_data, dv = Connectivity, wid = SubID,
         detailed = TRUE, within = .(SeedNetwork,Feature)))
 
 # t-test for PM (color vs scene):
-pander(t.test(Connectivity ~ Feature, data=features[features$SeedNetwork == 'PM',], paired=TRUE))
+pander(t.test(Connectivity ~ Feature, data=feature_data[feature_data$SeedNetwork == 'PM',], paired=TRUE))
 # t-test for AT (color vs scene):
-pander(t.test(Connectivity ~ Feature, data=features[features$SeedNetwork == 'AT',], paired=TRUE))
+pander(t.test(Connectivity ~ Feature, data=feature_data[feature_data$SeedNetwork == 'AT',], paired=TRUE))
+
+plot(features[[2]])
+ggsave('Remember_Network-to-ANGPREC.jpg',plot=last_plot(),dpi=300,width=6,height=7)
 
 ```
 

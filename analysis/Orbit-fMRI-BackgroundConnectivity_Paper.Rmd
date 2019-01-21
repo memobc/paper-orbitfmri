@@ -26,11 +26,11 @@ code.r{ /* Code block */
     font-size: 12px}
 </style>
 
-* Task background connectivity are run in CONN using a similar procedure to memory-modulated gppi analyses. However, instead of including task-related covariates as parametric modulators, here task-related covariates are regresssed out, along with FD, aCompCor, and motion, at the first-level de-noising step. 
+* Task background connectivity are run in CONN using a similar procedure to memory-modulated gppi analyses. However, instead of including event-related covariates as parametric modulators, here trial and memory-related covariates are regresssed out, along with FD, aCompCor, and motion, at the first-level de-noising step. 
 
 * Analyses use MNI-space unsmoothed data.  
 
-* Connectivity measures this reflect the 'background' or task-independent connections between bilateral ROIs, during either encoding or remember events. Thresholded at r > 0.25.
+* Connectivity measures thus reflect the 'background' or task-independent connections between bilateral ROIs, during either encoding or remember events. Thresholded at r > 0.25.
 
 ```{r, include=FALSE}
 
@@ -53,8 +53,8 @@ library('pander')
 se <- function(x) sqrt(var(x)/length(x))  #function to calculate SE
 
 ### define computer path
-myComp <- '/Users/memolab/Google Drive/'
-#myComp <- '/Users/rosecooper/Documents/'
+#myComp <- '/Users/memolab/Google Drive/'
+myComp <- '/Users/rosecooper/Documents/'
 
 # where are my first level CONN matrices
 matrixPath <- paste(myComp,'Work/Boston/ORBIT/analysis/fMRI/Orbit/FunctionalConnectivity/conn-roiData/',sep="")
