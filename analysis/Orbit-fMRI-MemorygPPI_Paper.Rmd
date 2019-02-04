@@ -61,7 +61,7 @@ myComp <- '/Users/rosecooper/Documents/'
 matrixPath <- paste(myComp,'Work/Boston/ORBIT/analysis/fMRI/Orbit/FunctionalConnectivity/conn-roiData/',sep="")
 
 ### load in conn functions:
-source(paste(myComp,'MemoLab/Manuscripts/Orbit-fMRI/paper-OrbitfMRI-repo/analysis/gPPI_functions_paper.R',sep=""))
+source(paste(myComp,'MemoLab/Manuscripts/SUBMITTED/Orbit-fMRI/paper-OrbitfMRI-repo/analysis/gPPI_functions_paper.R',sep=""))
 
 space <- 'MNI-unsmoothed'
 
@@ -116,6 +116,8 @@ pander(t.test(meanHipp$MeanConnectivity[meanHipp$Network == 'AT' & meanHipp$Regi
 pander(t.test(meanHipp$MeanConnectivity[meanHipp$Network == 'PM' & meanHipp$Region == 'aHIPP'], mu=0, alternative=type))
 pander(t.test(meanHipp$MeanConnectivity[meanHipp$Network == 'AT' & meanHipp$Region == 'pHIPP'], mu=0, alternative=type))
 pander(t.test(meanHipp$MeanConnectivity[meanHipp$Network == 'PM' & meanHipp$Region == 'pHIPP'], mu=0, alternative=type))
+
+write.csv(meanHipp, "Hipp-Network_MemoryQuality.csv", row.names=FALSE)
 
 ```
 
@@ -284,7 +286,7 @@ print(kable(sum))
 pander(t.test(similarity$Similarity, mu=0, alternative=type))
 
 # b) compare PM and AT seeds to common ANG/PREC targets by feature
-features <- feature_connections(ColorPrecisionPPI, ScenePrecisionPPI, seeds)
+features <- feature_connections(ColorPrecisionPPI, ScenePrecisionPPI, seeds, subjects)
 feature_data <- features[[1]]
 sum <- feature_data %>% group_by(SeedNetwork, Feature) %>%
                      summarise(Conn = mean(Connectivity), SE.Conn = se(Connectivity))
@@ -301,6 +303,8 @@ pander(t.test(Connectivity ~ Feature, data=feature_data[feature_data$SeedNetwork
 
 plot(features[[2]])
 ggsave('Remember_Network-to-ANGPREC.jpg',plot=last_plot(),dpi=300,width=6,height=7)
+
+write.csv(feature_data, "Feature_Connections.csv", row.names=FALSE)
 
 ```
 

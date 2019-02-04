@@ -17,7 +17,7 @@ I have also shared a few key analysis scripts in the `analysis` folder along wit
 The general flow of the included analysis scripts is as follows:
 - Analyze **behavioral data**: `Orbit-fMRI-Behavior_Paper.Rmd`
     - The formatted report with code can be found [here](http://www.thememolab.org/paper-orbitfmri/reports/Orbit-fMRI-Behavior_Paper.nb.html). This contains all analysis output from behavioral data in `Behavioral_data.csv`.
-- Analyze **univariate data**: `Orbit-fMRI-Univariate_Paper.Rmd`. This script analyzes first level betas, reflecting the change in mean ROI activity with increasing memory quality.
+- Analyze **univariate data**: `Orbit-fMRI-Univariate_Paper.Rmd`. This script analyzes first level betas in `Univariate_MemoryQuality_data.csv`, reflecting the change in mean ROI activity with increasing memory quality.
     - The analysis output and code can be found [here](http://www.thememolab.org/paper-orbitfmri/reports/Orbit-fMRI-Univariate_Paper.nb.html).
 - Analyze **background connectivity data**: 
     - Run the first level analysis using the [CONN toobox](https://sites.google.com/view/conn/): `conn_batch_firstlevel_background.m`. This script requires that all task regressors have already been generated.

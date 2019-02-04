@@ -1,3 +1,7 @@
 analysis/.Rhistory
 data/.Rhistory
-
+.DS_Store
+analysis/.DS_Store
+data/.DS_Store
+reports/.DS_Store
+task/.DS_Store

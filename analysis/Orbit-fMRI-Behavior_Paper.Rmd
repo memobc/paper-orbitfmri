@@ -46,8 +46,8 @@ library('pander')
 
 taskVer <- 'fMRI-behavior'
 ### define computer path
-myComp <- '/Users/memolab/Google Drive/'
-#myComp <- '/Users/rosecooper/Documents/'
+#myComp <- '/Users/memolab/Google Drive/'
+myComp <- '/Users/rosecooper/Documents/'
 
 ### define all functions:
 source(paste(myComp,'Work/Methods/myFunctions/General/multiplot.R',sep = "")) 
@@ -253,7 +253,7 @@ confidence <- correctData %>%
 group_data <- merge.data.frame(group_data, confidence, by = 'SubID')
 
 summary <- confidence %>%
-             summarise(EmotionConfidence = mean(EmotionConfidence), SE = se(EmotionConfidence))
+             summarise(EmotionConf = mean(EmotionConfidence), SE = se(EmotionConfidence))
 print(kable(summary))
 
 ```

@@ -136,3 +136,7 @@ ggplot(curData, aes(x=ROI, y=MeanBeta, fill = 'ROI')) +
 ggsave('Remember_Quality_Activity.jpg',plot=last_plot(),dpi=300,width=7.5,height=6)
 
 ```
+
+```{r}
+write.csv(ROIData, "Univariate_MemoryQuality_data.csv", row.names=FALSE)
+```

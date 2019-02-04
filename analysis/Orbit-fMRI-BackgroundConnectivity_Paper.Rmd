@@ -60,7 +60,7 @@ myComp <- '/Users/rosecooper/Documents/'
 matrixPath <- paste(myComp,'Work/Boston/ORBIT/analysis/fMRI/Orbit/FunctionalConnectivity/conn-roiData/',sep="")
 
 ### load in conn functions:
-source(paste(myComp,'MemoLab/Manuscripts/Orbit-fMRI/paper-OrbitfMRI-repo/analysis/background_functions_paper.R',sep=""))
+source(paste(myComp,'MemoLab/Manuscripts/SUBMITTED/Orbit-fMRI/paper-orbitfmri-repo/analysis/background_functions_paper.R',sep=""))
 
 seeds        <- c("ANG","PREC","PCC","RSC","PHC","pHIPP","aHIPP","PRC","AMYG","FUS","ITC","OFC")
 networks     <- c(1,1,1,1,1,2,2,3,3,3,3,3)  #network assignments to match to above seeds
@@ -169,6 +169,8 @@ ggsave(paste('Modularity_',th,'.jpg',sep=""), plot = last_plot(), dpi = 300, wid
 # t-test on change in modularity:
 pander(t.test(Modularity ~ Task, data=mod, paired=TRUE))
 
+write.csv(mod, "Background_Modularity.csv", row.names=FALSE)
+
 ```
 
 # Between vs Within Network Connectivity
@@ -206,10 +208,12 @@ pander(t.test(Strength ~ Measure, data=encoding, paired=TRUE))
 retrieval <- subset(network, Task == 'Retrieval')
 pander(t.test(Strength ~ Measure, data=retrieval, paired=TRUE))
 
+write.csv(network, "Background_Density.csv", row.names=FALSE)
+
 ```
 
 ```{r}
-### save data
+### save first level connectivity data
 backgroundEncoding  <- connMatrixE # fisher z subject-specific connectivity matrices
 backgroundRetrieval <- connMatrixR # ""
 modularity <- mod

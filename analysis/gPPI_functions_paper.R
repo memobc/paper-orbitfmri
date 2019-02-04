@@ -404,7 +404,7 @@ feature_similarity <- function(colorPPI, scenePPI){
 
 
 ## 11. Color vs Scene for PM and AT seeds (from result of seed connections) ---------------------------- #
-feature_connections <- function(colorPPI, scenePPI, seeds){
+feature_connections <- function(colorPPI, scenePPI, seeds, subjects){
   
   # creates data frame and plot to compare PM and AT seed connections to ANG with increasing color/
   # scene memory precision
@@ -438,7 +438,7 @@ feature_connections <- function(colorPPI, scenePPI, seeds){
         connections <- curPPI[seeds == mySeeds[1] | seeds == mySeeds[2],
                               seeds == myTargets[1] | seeds == myTargets[2]]
         row = row + 1
-        subData$SubID[row] <- s
+        subData$SubID[row] <- subjects[s]
         subData$Feature[row] <- f
         subData$SeedNetwork[row] <- network
         subData$Connectivity[row] <- mean(connections)

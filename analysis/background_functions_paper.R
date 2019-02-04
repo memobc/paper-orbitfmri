@@ -171,7 +171,7 @@ run_modularity <- function(connMatrixE, connMatrixR, subjects, th){
     # compute modularity
     modularity <- louvain(curMatrix)
     # add info
-    Q$Subject[row] <- sub
+    Q$Subject[row] <- subjects[sub]
     Q$Task[row] <- task
     Q$Modularity[row] <- modularity$Q
     }
@@ -213,13 +213,13 @@ run_network<- function(connMatrixE, connMatrixR, subjects, networks, th){
       }
     
       row = row+1
-      Q$Subject[row] <- sub
+      Q$Subject[row] <- subjects[sub]
       Q$Task[row] <- task
       Q$Measure[row] <- 'Within'
       Q$Strength[row] <- mean(within, na.rm = TRUE)
       
       row = row+1
-      Q$Subject[row] <- sub
+      Q$Subject[row] <- subjects[sub]
       Q$Task[row] <- task
       Q$Measure[row] <- 'Between'
       Q$Strength[row] <- mean(between, na.rm = TRUE)
