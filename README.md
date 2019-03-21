@@ -10,7 +10,7 @@ Episodic memories reflect a bound representation of multimodal features that can
 
 # Resources
 
-Psychtoolbox task scripts are included in the `task` folder. The stimuli used in the experiment can be obtained from the following links: [objects](https://bradylab.ucsd.edu/stimuli.html), [panorama scenes](http://people.csail.mit.edu/jxiao/SUN360/index.html), and [sounds](https://csea.phhp.ufl.edu/media/iadsmessage.html). 
+Psychtoolbox task scripts are included in the `task` folder. The stimuli used in the experiment can be obtained from the following links: [objects](https://bradylab.ucsd.edu/stimuli.html), [panorama scenes](http://3dvision.princeton.edu/projects/2012/SUN360/), and [sounds](https://csea.phhp.ufl.edu/media/iadsmessage.html). 
 
 I have also shared a few key analysis scripts in the `analysis` folder along with some corresponding `data` files and `reports`.
 
