@@ -2,7 +2,7 @@
 
 This repository includes scripts and data for the following paper:
 
-[**Cooper, R. & Ritchey, M. (preprint). Cortico-hippocampal network connections support the multidimensional quality of episodic memory. bioRxiv doi:10.1101/526657**](https://www.biorxiv.org/content/10.1101/526657v1?rss=1)
+[**Cooper, R. & Ritchey, M. (2019). Cortico-hippocampal network connections support the multidimensional quality of episodic memory. eLife, 8, e45591, doi:10.7554/eLife.45591**](https://elifesciences.org/articles/45591)
 
 # Abstract
 
