@@ -62,13 +62,8 @@ clear batch
 batch.filename=fullfile(b.outDir,[analysis_name '.mat']); % New conn_*.mat project name
 
 %get subjects who have first level covariate folders for CONN:
-subjects = dir(b.covDir);
-subjs = {};
-for s = 1:length(subjects)
-    if ~isempty(strfind(subjects(s).name,'sub')) && subjects(s).isdir
-        subjs = [subjs; {subjects(s).name}];
-    end
-end
+subjects = struct2cell(dir(b.covDir));
+subjs    = subjects(1,cellstrfind(subjects(1,:),'sub'));
 NSUBS = size(subjs,1);
 
 batch.Setup.isnew     = 1; %0 if want to update existing project
@@ -78,6 +73,7 @@ batch.Setup.RT        = TR; %TR (seconds)
 
 %% 2. GET FUNCTIONALS
 
+% LOAD UNSMOOTHED FILES FOR ROI-TO-ROI ANALYSIS
 fprintf('\nGetting functional scans...\n');
 
 batch.Setup.functionals = repmat({{}},[NSUBS,1]); % initialize main functional volumes for each subject/session
@@ -197,7 +193,7 @@ end
 fprintf('\nAdding task regressors...\n');
 
 % enters target events and all task- and memory-related covariates that
-% need to be regressed out of my ROI signals
+% need to be regressed out of my ROI signals for background connectivity
 for nsub=1:NSUBS
     fprintf('...%s\n',subjs{nsub});
     
@@ -214,7 +210,7 @@ for nsub=1:NSUBS
     % all covariates
     for nses = 1:nsessions
         
-        % 1. add task events --> encoding and remember
+        % 1. add task events --> encoding (1) and remember (2)
         for ev = 1:2
             %get onsets for this run from concatenated data
             minTime = (scans*TR)*(nses-1); maxTime = (scans*TR)*nses;
@@ -236,10 +232,10 @@ for nsub=1:NSUBS
         % corresponding parametric modulators - and saved as individual
         % text files.
         
-        % grab all covariates associated with this session for this subject:
+        % grab all covariates associated with this run for this subject:
         sessFiles = sort(cellstr(spm_select('FPList', [b.covDir subjs{nsub} '/'], ['.*_run0' num2str(nses) '.txt'])));
         
-        % only need covariates for encoding and remember events, and motion
+        % get covariates for encoding and remember events, and motion
         encoding = cellstrfind(sessFiles,'/Encoding')';
         retrieval = cellstrfind(sessFiles,'/Remember')';
         motion = cellstrfind(sessFiles,'/motion')';
@@ -268,7 +264,6 @@ end
 % CONN Setup
 batch.Setup.analyses=1; %[1,2] %ROI-to-ROI(1) and seed-to-voxel(2)
 batch.Setup.voxelmask=1; % 1. Explicit mask, 2. implicit subject specific
-batch.Setup.voxelmaskfile=[b.ROIdir 'wb_graymatter_mask.nii']; %for any whole-brain, mask with gray matter
 batch.Setup.voxelresolution=3; %same as functional volumes
 
 % CONN Denoising --> detrending and regress out specified regressors from functional data

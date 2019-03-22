@@ -37,7 +37,6 @@ addpath(b.scriptdir);
 TR    = 1.5; %TR for all functional scans
 scans = 466; %number of TRs per scan run
 
-
 % define the first level GLM to extract pmod information from for current CONN model
 modSpace = 'MNI-unsmoothed';
 model    = 'Features-SuccessPrecision-noEmot';
@@ -53,7 +52,6 @@ if ~exist(b.outDir,'dir')
 end
 
 % SPM/CONN toolboxes
-% **NOTE - the lab SPM 12 repo has implicit threshold changed from standard 0.8 default to -inf default (so analyses all voxels at first level -- include ROI or whole-brain masks)
 b.spmDir = '/gsfs0/data/ritcheym/repos/toolboxes-fmri/'; %lab fmri toolboxes
 addpath(genpath(b.spmDir));
 
@@ -78,13 +76,8 @@ clear batch
 batch.filename=fullfile(b.outDir,[analysis_name '.mat']); % New conn_*.mat project name
 
 %get subjects who have first level covariate folders for CONN:
-subjects = dir(b.covDir);
-subjs = {};
-for s = 1:length(subjects)
-    if ~isempty(strfind(subjects(s).name,'sub')) && subjects(s).isdir
-        subjs = [subjs; {subjects(s).name}];
-    end
-end
+subjects = struct2cell(dir(b.covDir));
+subjs    = subjects(1,cellstrfind(subjects(1,:),'sub'));
 NSUBS = size(subjs,1);
 
 batch.Setup.isnew     = 1; %1;  %0 if want to update existing analysis
@@ -94,6 +87,7 @@ batch.Setup.RT        = TR; %TR (seconds)
 
 %% 2. GET FUNCTIONALS
 
+% LOAD SMOOTHED AND UNSMOOTHED FILES FOR WHOLE BRAIN AND ROI-TO-ROI ANALYSES
 fprintf('\nGetting functional scans...\n');
 
 batch.Setup.functionals = repmat({{}},[NSUBS,1]); %main (smoothed) functional volumes for each subject/session
@@ -103,7 +97,7 @@ batch.Setup.roifunctionals.roiextract_functionals = repmat({{}},[NSUBS,1]); %add
 for nsub=1:NSUBS
     fprintf('...%s\n',subjs{nsub});
     
-    % a) main functionals (for whole-brain if running):
+    % a) main 4D functionals (for whole-brain):
     func_regexp = ['\<smooth.*task-Memory.*MNI.*_preproc.nii']; %smoothed
     clear funcFiles
     funcFiles = cellstr(spm_select('FPList', [b.funcDir subjs{nsub} '/'], func_regexp)); %find subjects's nii file for every session
@@ -130,7 +124,7 @@ for nsub=1:NSUBS
     for nses=1:nsessionsUn
         batch.Setup.roifunctionals.roiextract_functionals{nsub}{nses}{1} = funcFiles{nses,:};
     end
-    batch.Setup.roifunctionals.roiextract = 1; % 1 indicates same as main functional files % 4 indicate user defined data files
+    batch.Setup.roifunctionals.roiextract = 4; % 1 to extract roi data from main functional files % 4 indicate user defined data files
     
     if nsessionsSm ~= nsessionsUn
         error('Different number of smoothed and unsmoothed data files found.');
@@ -224,7 +218,7 @@ for nroi = 1:length(myROIs)
     batch.Setup.rois.names{nroi} = [myROIs{nroi}];
     batch.Setup.rois.files{nroi} = [b.ROIdir myROIs{nroi} '_ROI.nii']; %bilateral file
     batch.Setup.rois.dimensions{nroi} = 1; %extract single component (mean across voxels)
-    batch.Setup.rois.roiextract(nroi) = 0; %1 indicates to extract from additionally specified functional data, or same as main functionals (0).
+    batch.Setup.rois.roiextract(nroi) = 1; %1 indicates to extract from additionally specified functional data, or same as main functionals (0).
 end
 
 
@@ -234,8 +228,8 @@ fprintf('\nAdding task regressors...\n');
 
 % get all of this information from each subject's univariate first level
 % SPM.mat file:
-% Note. if just analyzing variables that are pmods, need to add 'dummy'
-% events (covering entire scan) to modulate with memory covariates for gPPI.
+% Note. for pmods, need to add 'dummy' events (covering entire scan)
+% to modulate with memory covariates for gPPI.
 % see: https://www.nitrc.org/forum/message.php?msg_id=14924
 for nsub=1:NSUBS
     fprintf('...%s\n',subjs{nsub});
@@ -243,10 +237,10 @@ for nsub=1:NSUBS
     %load subject's univariate first level info
     spmfile = load([b.modDir subjs{nsub} '/SPM.mat']);
     
-    % Note. only looking at 'remember' events.
+    % Note. only looking at 'remember' events (event 2).
     regNames = {};
     nEvents = length(spmfile.SPM.Sess.U);
-    for ev = 2
+    for ev = 2 %adds all regressor names associated with event (including pmods)
         regNames = [regNames, spmfile.SPM.Sess.U(ev).name];
     end
     
@@ -303,7 +297,7 @@ for nsub=1:NSUBS
         %add onsets and durations for events
         for ev = 2
             if length(spmfile.SPM.Sess.U(ev).name) > 1 %if this event has a pmod, covariate is parametric modulator
-                for p = 2:length(spmfile.SPM.Sess.U(ev).name) %start from 2 to avoid first main event regressor
+                for p = 2:length(spmfile.SPM.Sess.U(ev).name)
                     regCount = regCount + 1;
                     pname = spmfile.SPM.Sess.U(ev).name{p};
                     batch.Setup.covariates.names{regCount} = pname;
@@ -333,13 +327,13 @@ batch.Denoising.filter=[0.008 inf]; %matches spm high pass filtering --> recomme
 batch.Denoising.detrending=1;      % 1: linear detrending
 batch.Denoising.confounds.names={'denoising'};  %no need to remove task effects here as gPPI controls for these in regression model
 batch.Denoising.confounds.deriv{1}=0;  %do not add derviatives
-% ^^ Note. further adding WM and CSF initiates aCompCorr method (recommended),
-% whereas adding GM performs global signal regression (not recommended). I
-% have already included aCompCorr as a regressor in 'denoising' generated
+% ^^ Note. further adding WM and CSF initiates aCompCorr method in CONN (recommended),
+% whereas adding GM performs global signal regression (not always recommended). 
+% I have already included aCompCor in 'denoising' regressors generated
 % by fMRIprep, so don't need to further run via CONN.
 % CONN also automatically de-means the functional data of each run, to
 % remove differences in average signal between runs (as analyses are always
-% done on conctenated data) --> see 'results/preprocessing/'
+% done on conctenated data) --> see 'results/preprocessing/' output
 
 % CONN First level
 batch.Analysis.analysis_number='gppi'; %numerical index or custom string for analysis ID
@@ -348,7 +342,7 @@ batch.Analysis.weight=1;    %1=none, 2=HRF % don't need HRF weighting as not mod
 batch.Analysis.modulation=1; % 0 = standard weighted, 1 = gPPI of condition-specific temporal modulation factor.
 batch.Analysis.type=3; %1='ROI-to-ROI', 2=Seed-to-voxel, 3=all
 batch.Analysis.sources=batch.Setup.rois.names; % define seeds (all source rois)
-% CONN defaults to entering all conditions into the same analysis (full gPPI model)
+% Note. CONN defaults to entering all conditions in model into the same analysis (full gPPI model)
 
 
 %% 8. Run first level analyses

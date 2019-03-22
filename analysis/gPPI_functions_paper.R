@@ -9,7 +9,7 @@
 ## 1. Format conn data ------------------------------------------------------------------------------------ #
 format_conn <- function(myDir, seeds, subjects, model, contrast, event){
   
-  # loop through subjects to extract ROI-to-ROI matrix fron CONN first level analyses
+  # loop through subjects to extract ROI-to-ROI matrix (csv file) fron CONN first level analyses
   connMatrix = array(data = NA, c(length(seeds),length(seeds),length(subjects)))
   for (s in 1:length(subjects)) {
     
@@ -28,7 +28,7 @@ format_conn <- function(myDir, seeds, subjects, model, contrast, event){
 
 
 
-## 2. Overall change in connectivity for aHipp and pHipp (seed/target) --------------------------- #
+## 2. Overall change in connectivity for aHipp and pHipp ----------------------------------------- #
 mean_hipp_change<- function(subjects, ppiMatrix, seeds, networks){
   
   meanConn <- data.frame(array(NA, c(length(subjects)*4,4)))
