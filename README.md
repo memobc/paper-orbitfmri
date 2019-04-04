@@ -31,6 +31,10 @@ The general flow of the included analysis scripts is as follows:
     - First level ROIxROI connectivity matrices (beta estimates for the PPI regressor) for each memory modulator can be found in `Memory_gPPI_data.RData`. 
     - The group-level results of the hippocampus seed to voxel analysis (change in whole-brain hippocampal connectivity with increasing memory quality) are also provided as an spmT.nii file: `HippSeed_wholebrain_MemoryQuality_spmT.nii`.
 
+# License
+
+All data included in this project is licensed under the [CC BY 4.0 license](https://creativecommons.org/licenses/by/4.0/), and the underlying source code used to format and display that content is licensed under the [MIT license](https://github.com/memobc/paper-orbitfmri/blob/master/LICENSE).
+
 # Comments?
 
 Please direct any comments to Rose Cooper, rose.cooper at bc.edu. Please feel free to use any of these scripts. Unfortunately I cannot provide support for you to adapt them to your own data. Notice a bug? Please tell me.
