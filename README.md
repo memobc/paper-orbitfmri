@@ -33,7 +33,7 @@ The general flow of the included analysis scripts is as follows:
 
 # License
 
-All data included in this project is licensed under the [CC BY 4.0 license](https://creativecommons.org/licenses/by/4.0/), and the underlying source code used to format and display that content is licensed under the [MIT license](https://github.com/memobc/paper-orbitfmri/blob/master/LICENSE).
+All data included in this project is licensed under the [CC BY 4.0 license](https://creativecommons.org/licenses/by/4.0/), and all code is licensed under the [MIT license](https://github.com/memobc/paper-orbitfmri/blob/master/LICENSE).
 
 # Comments?
 
